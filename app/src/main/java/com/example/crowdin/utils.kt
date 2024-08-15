@@ -11,6 +11,7 @@ import android.telephony.CellInfoWcdma
 import android.telephony.TelephonyManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -32,6 +33,7 @@ import androidx.core.content.ContextCompat
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -81,6 +83,46 @@ fun resolveCoordinates(latitude: Double, longitude: Double): String {
 
     val json = responseBody?.let { JSONObject(it) }
     return json?.getString("display_name") ?: "Unknown"
+}
+
+fun cellTowerLookup(cellId: Int, lac: Int, mcc: Int, mnc: Int): String {
+//    val mcc = 310
+//    val mnc = 404
+//    val lac = 1
+//    val cellId = 5632016
+
+    val client = OkHttpClient()
+    val request = Request.Builder()
+        .url("https://us1.unwiredlabs.com/v2/process")
+        .post(
+            okhttp3.RequestBody.create(
+                "application/json".toMediaTypeOrNull(),
+                """
+                    {
+                        "token": "pk.8b14e9da4c39d1a8d6a7288680050f5a",
+                        "radio": "lte",
+                        "mcc": $mcc,
+                        "mnc": $mnc,
+                        "cells": [{
+                            "lac": $lac,
+                            "cid": $cellId,
+                            "psc": 0
+                        }],
+                        "address": 1
+                    }
+                """.trimIndent()
+            )
+        )
+        .build()
+
+    val response = client.newCall(request).execute()
+    val responseBody = response.body?.string()
+
+    val json = responseBody?.let { JSONObject(it) }
+    if (json != null && json.has("lat") && json.has("lon")) {
+        return "${json.get("lat")}, ${json.get("lon")}"
+    }
+    return "Unknown"
 }
 
 fun extractCellTowerLocationInfo(cellInfo: CellInfo): Map<String, Any?>? {
@@ -160,27 +202,59 @@ fun TowerInfoScreen() {
 
     if (towerInfo != null) {
         if (towerInfo!!.isEmpty()) {
-            Text("No cell tower information available")
             return
         }
         val towerDetails = extractCellTowerLocationInfo(towerInfo!![0])
+        val cellCoordinates = remember { mutableStateOf("Unknown") }
+        LaunchedEffect(towerDetails) {
+            if (towerDetails != null)
+                Thread {
+                    try {
+                        var lac = towerDetails["lac"]
+                        if (lac == null) {
+                            lac = towerDetails["tac"]
+                        }
+                        cellCoordinates.value = cellTowerLookup(
+                            towerDetails["cellId"] as Int,
+                            lac as Int,
+                            towerDetails["mcc"] as Int,
+                            towerDetails["mnc"] as Int
+                        )
+                    } catch (e: Exception) {
+                        cellCoordinates.value = "Unknown"
+                    }
+                }.start()
+        }
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
                 .fillMaxWidth(),
             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
         ) {
-            ElevatedButton(onClick = { /*TODO*/ },
+            ElevatedButton(
+                onClick = { /*TODO*/ },
                 shape = RoundedCornerShape(5.dp)
+            ) {
+                Column(
+                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
                 ) {
-                Text(
-                    "TowerId: ${towerDetails?.get("cellId")} LAC: ${towerDetails?.get("tac")} MCC: ${
-                        towerDetails?.get(
-                            "mcc"
+                    Text(
+                        "TowerID: ${towerDetails?.get("cellId")} LAC: ${towerDetails?.get("tac")} MCC: ${
+                            towerDetails?.get(
+                                "mcc"
+                            )
+                        } MNC: ${towerDetails?.get("mnc")}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp
+                    )
+                    if (cellCoordinates.value != "Unknown") {
+                        Text(
+                            "Tower Location: ${cellCoordinates.value}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp
                         )
-                    } MNC: ${towerDetails?.get("mnc")}",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp
-                )
+                    }
+                }
             }
         }
     }

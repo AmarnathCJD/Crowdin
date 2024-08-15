@@ -66,6 +66,11 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.delay
+import android.media.MediaPlayer
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun Home() {
@@ -207,6 +212,7 @@ fun HomeMain(it: PaddingValues) {
 
         LocationDisplay(locationName.value, latlng.value.first, latlng.value.second)
         AutoUpdatingClock()
+        PlaySOS()
 
         Row(
             horizontalArrangement = Arrangement.Center,
@@ -221,7 +227,10 @@ fun HomeMain(it: PaddingValues) {
 
                 Color(0xFFEF5350),
                 iconRes = R.drawable.sos_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-                contentDescription = "Add"
+                contentDescription = "Add",
+                click = {
+                    SOSSoundActive.value = !SOSSoundActive.value
+                }
             )
             ActionButton(
                 backgroundColor =
@@ -425,7 +434,7 @@ fun AutoUpdatingClock() {
             text = DateUtils.formatDateTime(
                 LocalContext.current,
                 currentTime.longValue,
-                DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME
+                DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_SHOW_WEEKDAY
             ).toString(),
             color = Color(0xFFADA2AF),
             modifier = Modifier.padding(vertical = 8.dp),
@@ -586,9 +595,9 @@ fun WelcomeMessage(loggedInUser: String) {
 }
 
 @Composable
-fun ActionButton(backgroundColor: Color, iconRes: Int, contentDescription: String) {
+fun ActionButton(backgroundColor: Color, iconRes: Int, contentDescription: String, click: () -> Unit = {}) {
     Button(
-        onClick = { /*TODO*/ },
+        onClick = click,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,
             contentColor = Color.White
@@ -689,4 +698,47 @@ fun LocationDisplay(location: String, latitude: Double = 0.0, longitude: Double 
     }
 
     TowerInfoScreen()
+}
+
+val SOSSoundActive = mutableStateOf(false)
+
+@Composable
+fun PlaySOS() {
+    val context = LocalContext.current
+    val mediaPlayer = remember { MediaPlayer() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(SOSSoundActive.value) {
+        if (SOSSoundActive.value) {
+            scope.launch(Dispatchers.IO) {
+                try {
+                    val fileDescriptor = context.resources.openRawResourceFd(R.raw.humba)
+                    mediaPlayer.setDataSource(fileDescriptor.fileDescriptor, fileDescriptor.startOffset, fileDescriptor.length)
+                    fileDescriptor.close()
+                    mediaPlayer.prepare()
+                    mediaPlayer.isLooping = true
+                    mediaPlayer.start()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        } else {
+            scope.launch(Dispatchers.IO) {
+                try {
+                    if (mediaPlayer.isPlaying) {
+                        mediaPlayer.stop()
+                        mediaPlayer.reset()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer.release()
+        }
+    }
 }
