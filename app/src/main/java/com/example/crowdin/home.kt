@@ -67,10 +67,13 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.delay
 import android.media.MediaPlayer
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+var nearbyAlertsEnabled = mutableStateOf(true)
 
 @Composable
 fun Home() {
@@ -232,13 +235,27 @@ fun HomeMain(it: PaddingValues) {
                     SOSSoundActive.value = !SOSSoundActive.value
                 }
             )
-            ActionButton(
-                backgroundColor =
-                Color(0xFF66BB6A),
-
-                iconRes = R.drawable.notifications_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-                contentDescription = "Alert"
-            )
+            if (nearbyAlertsEnabled.value) {
+                ActionButton(
+                    backgroundColor =
+                    Color(0xFF42A5F5),
+                    iconRes = R.drawable.notifications_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                    contentDescription = "Alert",
+                    click = {
+                        nearbyAlertsEnabled.value = !nearbyAlertsEnabled.value
+                    }
+                )
+            } else {
+                ActionButton(
+                    backgroundColor =
+                    Color(0xFF42A5F5),
+                    iconRes = R.drawable.notifications_off_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                    contentDescription = "Alert",
+                    click = {
+                        nearbyAlertsEnabled.value = !nearbyAlertsEnabled.value
+                    }
+                )
+            }
         }
 
         InfoBox(
@@ -277,35 +294,42 @@ fun HomeMain(it: PaddingValues) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(0.dp)
         ) {
-
-            Button(
-                onClick = { /*TODO*/ },
-                colors = ButtonDefaults.buttonColors(
+            Card(
+                colors = CardColors(
                     containerColor = Color(0xFFFFCA28),
-                    contentColor = Color.White
+                    contentColor = Color.White,
+                    disabledContentColor = Color(0xFF6A1B9A),
+                    disabledContainerColor = Color(0xFFE1BEE7),
                 ),
                 modifier = Modifier
                     .padding(bottom = 16.dp, top = 16.dp, start = 16.dp, end = 16.dp)
                     .padding(horizontal = 20.dp)
                     .fillMaxWidth()
-                    .height(45.dp),
-                shape = RoundedCornerShape(10.dp)
+                    .height(45.dp)
+                    .clickable {  },
+                shape = RoundedCornerShape(10.dp),
+                elevation = CardDefaults.cardElevation(6.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add",
-                    tint = Color.White,
-                    modifier = Modifier.size(26.dp)
-                )
-                Text(
-                    text = "Report Something",
-                    style = TextStyle(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add",
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
                     )
-                )
+                    Text(
+                        text = "Report Something",
+                        style = TextStyle(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    )
+                }
             }
         }
 
@@ -596,12 +620,14 @@ fun WelcomeMessage(loggedInUser: String) {
 
 @Composable
 fun ActionButton(backgroundColor: Color, iconRes: Int, contentDescription: String, click: () -> Unit = {}) {
-    Button(
-        onClick = click,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = Color.White
+    Card(
+        colors = CardColors(
+            containerColor = backgroundColor,
+            contentColor = Color.White,
+            disabledContentColor = Color.White,
+            disabledContainerColor = Color.Transparent
         ),
+        elevation = CardDefaults.cardElevation(10.dp),
         modifier = Modifier
             .padding(10.dp)
             .width(140.dp)
@@ -609,14 +635,21 @@ fun ActionButton(backgroundColor: Color, iconRes: Int, contentDescription: Strin
             .background(
                 color = backgroundColor,
                 shape = RoundedCornerShape(25.dp)
-            ),
+            )
+            .clickable { click() },
         shape = RoundedCornerShape(40.dp)
     ) {
-        Image(
-            painter = painterResource(id = iconRes),
-            contentDescription = contentDescription,
-            modifier = Modifier.size(64.dp)
-        )
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Image(
+                painter = painterResource(id = iconRes),
+                contentDescription = contentDescription,
+                modifier = Modifier.size(64.dp)
+            )
+        }
     }
 }
 

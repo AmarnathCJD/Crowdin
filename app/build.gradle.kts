@@ -67,4 +67,9 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.accompanist.permissions)
     implementation(libs.okhttp)
+
+    implementation(libs.androidx.activity.compose.v161)
+    implementation(libs.androidx.activity.ktx)
+
+    implementation(libs.tensorflow.lite)
 }
