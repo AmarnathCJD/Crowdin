@@ -1,77 +1,61 @@
 package com.example.crowdin
 
+
+
+
 import android.annotation.SuppressLint
 import android.net.Uri
-import android.text.format.DateUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
-import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.ComposeMapColorScheme
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -80,17 +64,6 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.layout.ContentScale
-//import coils library
-import coil.compose.rememberAsyncImagePainter   //add this line
-import coil.request.ImageRequest
-import kotlinx.coroutines.GlobalScope
-//import com.hardcoreandroid.photopickerdemo.ui.theme.PhotoPickerDemoTheme
-
-
-import kotlinx.coroutines.delay
-import java.util.logging.Logger.global
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnrememberedMutableState")
@@ -98,6 +71,7 @@ import java.util.logging.Logger.global
 
 @Composable
 fun CreateAlert() {
+
     val selectedLocation = remember { mutableStateOf(LatLng(0.0, 0.0)) }
     var SelectedItem by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
@@ -108,9 +82,11 @@ fun CreateAlert() {
             .fillMaxSize()
 
             .background(Color.White)
-            //.verticalScroll(scrollState),
+            //color code for black background
+//            .background(Color(0xFF413E3E))
+        //.verticalScroll(scrollState),
 
-        ) {
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -132,8 +108,8 @@ fun CreateAlert() {
         }
         Spacer(
             modifier = Modifier
-                .height(10.dp)
-                .background(Color.Black)
+                .height(5.dp)
+                .background(Color.White)
                 .fillMaxWidth()
         )
         val Now_location = LatLng(9.531650, 76.820450)
@@ -141,6 +117,10 @@ fun CreateAlert() {
         val cameraPositionState = rememberCameraPositionState {
             position = CameraPosition.fromLatLngZoom(Now_location, 10f)
         }
+
+        val m = mutableStateOf("")
+
+
 
         Card(
             modifier = Modifier
@@ -154,6 +134,13 @@ fun CreateAlert() {
             GoogleMap(
                 onMapClick = { latLng ->
                     selectedLocation.value = latLng
+                    Thread {
+                        println("monna selected location: ${selectedLocation.value}")
+                        m.value = resolveCoordinates(
+                            selectedLocation.value.latitude,
+                            selectedLocation.value.longitude
+                        )
+                    }.start()
                     cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 10f)
                 },
                 modifier = Modifier.fillMaxSize(),
@@ -189,6 +176,7 @@ fun CreateAlert() {
                 """.trimIndent()
                     )
                 ),
+
                 uiSettings = MapUiSettings(
                     compassEnabled = true,
                     scrollGesturesEnabled = true,
@@ -202,12 +190,15 @@ fun CreateAlert() {
             ) {
 
 
+
                 if (selectedLocation.value.latitude != 0.0) {
                     Marker(
                         state = MarkerState(position = selectedLocation.value),
-                        title = "Selected Location",
-                        snippet = "Lat: ${selectedLocation.value.latitude}, Lng: ${selectedLocation.value.longitude}"
-                    )
+                        title = m.value.split(",", limit = 2)[0],
+                        snippet = m.value,
+
+
+                        )
                 }
 
 
@@ -218,17 +209,17 @@ fun CreateAlert() {
 
         Spacer(
             modifier = Modifier
-                .height(10.dp)
-                .background(Color.Black)
+                .height(5.dp)
+                .background(Color.White)
                 .fillMaxWidth()
         )
-        Column (
+        Column(
             modifier = Modifier.verticalScroll(rememberScrollState())
-        ){
+        ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp,5.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -291,7 +282,7 @@ fun CreateAlert() {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp,5.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {//alert title
@@ -319,7 +310,7 @@ fun CreateAlert() {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp,5.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
 
@@ -351,7 +342,7 @@ fun CreateAlert() {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp,5.dp),
                 horizontalArrangement = Arrangement.Absolute.Left,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -425,7 +416,7 @@ fun CreateAlert() {
 
             var radius by remember { mutableStateOf(50f) }
             val minRadius = 0f
-            val maxRadius = 100f
+            val maxRadius = 300f
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -439,20 +430,20 @@ fun CreateAlert() {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(16.dp,5.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = " Radius : ${radius.toInt()} m", style = TextStyle(
+                        text = " Radius : ${radius.toInt()} Km", style = TextStyle(
                             color = Color.Black,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace,
+//                            fontFamily = FontFamily.Monospace,
                         )
                     )
                     Slider(
-                        modifier = Modifier.width(180.dp),
+                        modifier = Modifier.width(155.dp),
                         value = radius,
                         onValueChange = { newValue -> radius = (newValue / 10).toInt() * 10f },
                         valueRange = minRadius..maxRadius
@@ -466,7 +457,7 @@ fun CreateAlert() {
                                 radius = input
                             }
                         },
-                        label = { Text("Radius(m)") },
+                        label = { Text("Radius(Km)") },
                         modifier = Modifier
                             .width(150.dp)
                             .height(55.dp),
@@ -479,7 +470,7 @@ fun CreateAlert() {
                 modifier = Modifier
                     .fillMaxWidth()
 
-                    .padding(16.dp),
+                    .padding(16.dp,5.dp),
 //            horizontalArrangement = Arrangement.SpaceEvenly,
 //            verticalAlignment = Alignment.CenterVertically
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -496,7 +487,7 @@ fun CreateAlert() {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(16.dp,5.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceEvenly
                 ) {
@@ -514,7 +505,8 @@ fun CreateAlert() {
                                 .width(200.dp)
                                 .height(400.dp)
                                 .padding(0.dp)
-                                .border(2.dp, Color.Black),
+                               // .border(2.dp, Color.Black)
+                                    .clip(RoundedCornerShape(10.dp)),
                             contentScale = ContentScale.Fit,
                             alignment = Alignment.Center
                         )
@@ -549,7 +541,7 @@ fun CreateAlert() {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp,5.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -557,10 +549,10 @@ fun CreateAlert() {
                     onClick = {
                         // Handle the submit button press
                         println("Submit button pressed")
-                        println("monna alert title: ${alertTitle.value} , alert desc: ${alertDesc.value} , priority: ${priority} , radius: $radius")
+                        println("monna alert title: ${alertTitle.value} , alert desc: ${alertDesc.value} , priority: $priority , radius: $radius")
                         sseClient.AlertViewModel.sendAlert(
                             title = alertTitle.value,
-                            type=SelectedItem,
+                            type = SelectedItem,
                             message = alertDesc.value,
                             severity = priority,
                             radius = radius.toInt(),
