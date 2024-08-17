@@ -274,7 +274,10 @@ fun timeMsToTimeString(timeMs: Long): String {
 }
 
 fun isPermissionGranted(context: Context, permission: String): Boolean {
-    return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+    return ContextCompat.checkSelfPermission(
+        context,
+        permission
+    ) == PackageManager.PERMISSION_GRANTED
 }
 
 fun getCustomBitmapDescriptor(
@@ -289,7 +292,7 @@ fun getCustomBitmapDescriptor(
     if (color != Color.Transparent) {
         DrawableCompat.setTint(drawable, color.toArgb())
     }
-   // DrawableCompat.setTint(drawable, color.toArgb())
+    // DrawableCompat.setTint(drawable, color.toArgb())
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
@@ -307,7 +310,7 @@ fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): D
                 cos(deg2rad(lat1)) * cos(deg2rad(lat2)) *
                 sin(dLon / 2) * sin(dLon / 2)
     val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    val res =  R * c
+    val res = R * c
     return Math.round(res * 100.0) / 100.0
 }
 
