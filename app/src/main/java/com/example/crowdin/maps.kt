@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -90,12 +91,6 @@ fun MainLayout(nav: NavController) {
                     Icon(
                         imageVector = Icons.Default.Menu,
                         contentDescription = "Menu",
-                        tint = Color(0xFF05445e),
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Arrow",
                         tint = Color(0xFF05445e),
                         modifier = Modifier.size(28.dp)
                     )
@@ -277,7 +272,6 @@ fun MapViewMain(paddingValues: PaddingValues, nav: NavController) {
                 cameraPositionState = cameraPositionState,
                 onMyLocationClick = {
                     currentLocation.value = LatLng(it.latitude, it.longitude)
-                    println("My location clicked: $it")
                 },
                 properties = MapProperties(
                     isTrafficEnabled = true,
@@ -353,7 +347,13 @@ fun MapViewMain(paddingValues: PaddingValues, nav: NavController) {
                         fillColor = Color(0x220000FF),
                         tag = alert.id.toString(),
                         strokeColor = Color(0x220000FF),
-                        strokeWidth = 5f
+                        strokeWidth = 5f,
+                        onClick = {
+                            cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                                LatLng(alert.lat, alert.lon),
+                                11f
+                            )
+                        }
                     )
 
                     if (cameraPositionState.position.zoom > 9) {
@@ -367,7 +367,8 @@ fun MapViewMain(paddingValues: PaddingValues, nav: NavController) {
                                 Color.Transparent,
                                 170,
                                 170,
-                            ),
+                            ), // TODO: fix offset issue.
+                            anchor = Offset(0.5f, 1f),
                             onClick = {
                                 locationNameForPopup.value = ""
                                 PopupDataObj.value = PopupData(

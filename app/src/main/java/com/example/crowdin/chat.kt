@@ -1,7 +1,6 @@
 package com.example.crowdin
 
 import android.annotation.SuppressLint
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -22,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
@@ -76,10 +76,6 @@ val generativeModel = GenerativeModel(
 
 @Composable
 fun ChatPage(nav: NavController) {
-//    BackHandler {
-//        nav.navigate(popNavEntry())
-//    }
-
     val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
@@ -98,16 +94,14 @@ fun ChatPage(nav: NavController) {
                         .padding(16.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Menu,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Menu",
                         tint = Color(0xFF05445e),
-                        modifier = Modifier.size(28.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Arrow",
-                        tint = Color(0xFF05445e),
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clickable {
+                                nav.popBackStack()
+                            }
                     )
                 }
             },
@@ -138,29 +132,34 @@ fun ChatPage(nav: NavController) {
                                 )
                         ) {
                             BottomIconItem(
-                                imageRes = R.drawable.pets_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-                                color = ColorPalette.secondary,
-                                name = "Animals"
+                                imageRes = R.drawable.forum_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                                color = ColorPalette.redish,
+                                name = "Chats",
+                                nav = nav
                             )
                             BottomIconItem(
                                 imageRes = R.drawable.notifications_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                                 color = ColorPalette.secondary,
-                                name = "Alerts"
+                                name = "Alerts",
+                                nav = nav
                             )
                             BottomIconItem(
                                 imageRes = R.drawable.roofing_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-                                color = ColorPalette.redish,
-                                name = "Home"
+                                color = ColorPalette.secondary,
+                                name = "Home",
+                                nav = nav
                             )
                             BottomIconItem(
                                 imageRes = R.drawable.my_location_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                                 color = ColorPalette.secondary,
-                                name = "Location"
+                                name = "Location",
+                                nav = nav
                             )
                             BottomIconItem(
                                 imageRes = R.drawable.admin_panel_settings_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                                 color = ColorPalette.secondary,
-                                name = "Account"
+                                name = "Account",
+                                nav = nav
                             )
                         }
                     }
@@ -191,20 +190,25 @@ fun ChatPageMain(paddingValues: PaddingValues, scrollState: ScrollState) {
 
 var chatText by mutableStateOf("")
 var chatTitle by mutableStateOf("Crowdin AI Chat")
+var chatDescription by mutableStateOf("Your InApp Assistant")
 var isAiChat by mutableStateOf(true)
 var scrollStatePosition by mutableIntStateOf(0)
-var convoId by mutableStateOf(1)
-var myName by mutableStateOf("User")
-var aiChat = generativeModel.startChat(listOf(
-    Content(
-        role = "user",
-        parts = listOf(
-            TextPart(
-                text = "Username: Jenna M Ortega"
+var convoId by mutableIntStateOf(1)
+var myName by mutableStateOf(
+    userName.value
+)
+var aiChat = generativeModel.startChat(
+    listOf(
+        Content(
+            role = "user",
+            parts = listOf(
+                TextPart(
+                    text = "Username: Jenna M Ortega"
+                )
             )
         )
     )
-))
+)
 
 suspend fun prompt(prompt: String) {
     val response = aiChat.sendMessage(
@@ -249,7 +253,11 @@ fun ChatInput() {
                             .clickable {
                                 if (chatText.isEmpty()) return@clickable
                                 val prompt = chatText
-                                sseClient.ChatViewModel.sendMessage(convoId.toString(), chatText, myName)
+                                sseClient.ChatViewModel.sendMessage(
+                                    convoId.toString(),
+                                    chatText,
+                                    myName
+                                )
                                 chatText = ""
                                 if (convoId == 1) {
                                     coroutineScope.launch {
@@ -291,7 +299,11 @@ fun ChatTitle() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Column {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -303,6 +315,7 @@ fun ChatTitle() {
                         fontWeight = FontWeight.Bold
                     )
                 }
+
                 if (typingAnimation != 0) {
                     Row(
                         horizontalArrangement = Arrangement.Center
@@ -316,10 +329,23 @@ fun ChatTitle() {
                         )
                     }
                 }
+
+                if (chatDescription.isNotEmpty()) {
+                    Row {
+                        Text(
+                            text = chatDescription,
+                            fontSize = 12.sp,
+                            color = Color(0xFFA3A3A7),
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(start = 36.dp)
+                        )
+                    }
+                }
             }
         }
     }
 }
+
 
 @Composable
 fun ChatList(scrollState: ScrollState) {
@@ -485,8 +511,8 @@ fun OpenChatsList(nav: NavController) {
                         ) {
                             BottomIconItem(
                                 imageRes = R.drawable.pets_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-                                color = ColorPalette.secondary,
-                                name = "Animals",
+                                color = ColorPalette.redish,
+                                name = "Chats",
                                 nav = nav
                             )
                             BottomIconItem(
@@ -497,7 +523,7 @@ fun OpenChatsList(nav: NavController) {
                             )
                             BottomIconItem(
                                 imageRes = R.drawable.roofing_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-                                color = ColorPalette.redish,
+                                color = ColorPalette.secondary,
                                 name = "Home",
                                 nav = nav
                             )
@@ -519,14 +545,14 @@ fun OpenChatsList(nav: NavController) {
             },
             containerColor = Color.Transparent,
             content = {
-                OpenChatsListMain(paddingValues = it)
+                OpenChatsListMain(paddingValues = it, nav = nav)
             }
         )
     }
 }
 
 @Composable
-fun OpenChatsListMain(paddingValues: PaddingValues) {
+fun OpenChatsListMain(paddingValues: PaddingValues, nav: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -536,7 +562,7 @@ fun OpenChatsListMain(paddingValues: PaddingValues) {
             )
     ) {
         AllChatTitle()
-        AllChatList(rememberScrollState())
+        AllChatList(rememberScrollState(), nav = nav)
     }
 }
 
@@ -564,7 +590,7 @@ fun AllChatTitle() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Click on a chat to open",
+                        text = "Community Chats for Assistance",
                         fontSize = 16.sp,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         color = Color(0xFF9575CD),
@@ -583,8 +609,9 @@ class Chat(
 )
 
 @Composable
-fun AllChatList(scrollState: ScrollState) {
-    val chatList = remember { mutableStateOf(listOf(Chat(1, "Crowdin AI", "Your InApp Assistant")))}
+fun AllChatList(scrollState: ScrollState, nav: NavController) {
+    val chatList =
+        remember { mutableStateOf(listOf(Chat(1, "Crowdin AI", "Your InApp Assistant"))) }
     LaunchedEffect(Unit) {
         sseClient.ChatViewModel.getChatsList(chatList)
     }
@@ -599,7 +626,7 @@ fun AllChatList(scrollState: ScrollState) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 4.dp)
                     .padding(
                         start = 10.dp,
                         end = 10.dp
@@ -617,13 +644,24 @@ fun AllChatList(scrollState: ScrollState) {
                             color = Color(0xFFE8EAF6),
                             shape = RoundedCornerShape(10.dp)
                         )
-                        .padding(15.dp)
-                        .padding(end = 20.dp)
+                        .padding(16.dp)
+                        .padding(end = 12.dp)
                         .fillMaxWidth()
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                convoId = it.chatId
+                                chatTitle = it.name
+                                chatDescription = it.description
+                                isAiChat = it.name == "Crowdin AI"
+                                sseClient.ChatViewModel.clearMessages()
+
+                                nav.navigate("ChatView")
+                            }
                     ) {
                         Image(
                             painter = painterResource(id = if (it.name == "Crowdin AI") R.drawable.star_24dp_e8eaed_fill0_wght400_grad0_opsz24 else R.drawable.forum_24dp_e8eaed_fill0_wght400_grad0_opsz24),
@@ -633,7 +671,7 @@ fun AllChatList(scrollState: ScrollState) {
                                 .padding(
                                     end = 12.dp
                                 ),
-                            colorFilter = ColorFilter.tint(Color(0xFFEF6C00))
+                            colorFilter = ColorFilter.tint(Color(0xFFF57C00))
                         )
                         Text(
                             text = it.name,
@@ -643,8 +681,8 @@ fun AllChatList(scrollState: ScrollState) {
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(
-                            text = "(?)",
-                            fontSize = 12.sp,
+                            text = if (it.name == "Crowdin AI") "Your InApp Assistant" else "Join Chat",
+                            fontSize = 13.sp,
                             color = Color(0xFF558B2F),
                             fontWeight = FontWeight.SemiBold
                         )

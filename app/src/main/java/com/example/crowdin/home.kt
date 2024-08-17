@@ -3,10 +3,12 @@ package com.example.crowdin
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.media.MediaPlayer
 import android.text.format.DateUtils
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,14 +36,21 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -54,6 +63,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.navigation.NavController
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.CameraPosition
@@ -67,19 +78,8 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.delay
-import android.media.MediaPlayer
-import androidx.compose.foundation.clickable
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.core.app.ActivityCompat
-import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 var nearbyAlertsEnabled = mutableStateOf(true)
@@ -278,8 +278,8 @@ fun HomeMain(it: PaddingValues, nav: NavController) {
 
         InfoBox(
             message1 = "We'll Let you know when\nCrowd levels change",
-            message2 = "We'll Let you know when\n" +
-                    "Crowd levels change"
+            message2 =
+            "We'll alert you instantly when it starts to escalate"
         )
 
         if (locationName.value == "Unknown") {
@@ -402,15 +402,16 @@ val nearByPeopleScanEnabled = mutableStateOf(false)
 fun NearbyPeople() {
     var sliderPosition by remember { mutableFloatStateOf(0f) }
     val radiusFactor = 100f
-    Row (
+    Row(
         horizontalArrangement = Arrangement.Center,
         modifier = Modifier
             .fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(6.dp)
+            modifier = Modifier
+                .padding(6.dp)
                 .background(Color(0xFFF3E5F5), shape = RoundedCornerShape(10.dp)),
-            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Row(
@@ -419,12 +420,13 @@ fun NearbyPeople() {
                     .padding(horizontal = 12.dp)
                     .padding(top = 6.dp)
                     .background(Color(0xFFF3E5F5), shape = RoundedCornerShape(10.dp)),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "People Nearby: ${nearByPeople.intValue}",
                     color = Color(0xFF9575CD),
-                    modifier = Modifier.padding(vertical = 1.dp, horizontal = 18.dp)
+                    modifier = Modifier
+                        .padding(vertical = 1.dp, horizontal = 18.dp)
                         .clip(shape = RoundedCornerShape(14.dp)),
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp
@@ -438,7 +440,7 @@ fun NearbyPeople() {
             )
             Row(
                 horizontalArrangement = Arrangement.Center,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .padding(horizontal = 6.dp),
             ) {
@@ -464,11 +466,18 @@ fun NearbyPeople() {
                     onClick = {
                         if (!nearByPeopleScanEnabled.value) {
                             nearByPeopleScanEnabled.value = true
-                            getNearbyUsers(userName.value, (radiusFactor * sliderPosition).toInt(), nearByPeople, nearByPeopleScanEnabled)
+                            getNearbyUsers(
+                                userName.value,
+                                (radiusFactor * sliderPosition).toInt(),
+                                nearByPeople,
+                                nearByPeopleScanEnabled
+                            )
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (nearByPeopleScanEnabled.value) Color(0xFFE1BEE7) else Color(0xFF9575CD),
+                        containerColor = if (nearByPeopleScanEnabled.value) Color(0xFFE1BEE7) else Color(
+                            0xFF9575CD
+                        ),
                         contentColor = Color.White
                     ),
                     modifier = Modifier.padding(6.dp),
@@ -481,6 +490,54 @@ fun NearbyPeople() {
                         fontSize = 12.sp
                     )
                 }
+            }
+        }
+        Column(
+            modifier = Modifier
+                .padding(6.dp)
+                .background(Color(0xFFF3E5F5), shape = RoundedCornerShape(10.dp)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .padding(horizontal = 6.dp)
+                    .padding(top = 6.dp)
+                    .background(Color(0xFFF3E5F5), shape = RoundedCornerShape(10.dp)),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Ambulance Traffick",
+                    color = Color(0xFF9575CD),
+                    modifier = Modifier
+                        .padding(vertical = 1.dp, horizontal = 16.dp)
+                        .clip(shape = RoundedCornerShape(14.dp)),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+            }
+            Text(
+                text = "Traffic Avoidance System",
+                color = Color(0xFF9575CD),
+                fontWeight = FontWeight.Bold,
+                fontSize = 10.sp
+            )
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(horizontal = 5.dp, vertical = 5.dp),
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ambulance_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                    contentDescription = "Ambulance",
+                    modifier = Modifier
+                        .size(100.dp)
+                        .padding(6.dp)
+                        .padding(bottom = 12.dp),
+                    colorFilter = ColorFilter.tint(Color(0xFFEF5350))
+                )
             }
         }
     }
@@ -741,7 +798,12 @@ fun WelcomeMessage(loggedInUser: String) {
 }
 
 @Composable
-fun ActionButton(backgroundColor: Color, iconRes: Int, contentDescription: String, click: () -> Unit = {}) {
+fun ActionButton(
+    backgroundColor: Color,
+    iconRes: Int,
+    contentDescription: String,
+    click: () -> Unit = {}
+) {
     Card(
         colors = CardColors(
             containerColor = backgroundColor,
@@ -868,7 +930,11 @@ fun PlaySOS() {
             scope.launch(Dispatchers.IO) {
                 try {
                     val fileDescriptor = context.resources.openRawResourceFd(R.raw.humba)
-                    mediaPlayer.setDataSource(fileDescriptor.fileDescriptor, fileDescriptor.startOffset, fileDescriptor.length)
+                    mediaPlayer.setDataSource(
+                        fileDescriptor.fileDescriptor,
+                        fileDescriptor.startOffset,
+                        fileDescriptor.length
+                    )
                     fileDescriptor.close()
                     mediaPlayer.prepare()
                     mediaPlayer.isLooping = true
