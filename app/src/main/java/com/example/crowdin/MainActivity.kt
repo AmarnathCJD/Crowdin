@@ -15,7 +15,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         sseClient.initSse(sseClient.handler)
         setContent {
-            MainLayout()
+            //MainLayout()
+            CreateAlert()
+
         }
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
