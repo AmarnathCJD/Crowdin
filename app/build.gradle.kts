@@ -80,4 +80,5 @@ dependencies {
     implementation(libs.accompanist.navigation.animation)
 
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.navigation.compose.v274)
 }
