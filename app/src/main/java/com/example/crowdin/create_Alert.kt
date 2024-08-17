@@ -94,8 +94,13 @@ import java.util.logging.Logger.global
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnrememberedMutableState")
+
+
 @Composable
 fun CreateAlert() {
+    val selectedLocation = remember { mutableStateOf(LatLng(0.0, 0.0)) }
+    var SelectedItem by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
@@ -103,7 +108,7 @@ fun CreateAlert() {
             .fillMaxSize()
 
             .background(Color.White)
-            .verticalScroll(scrollState),
+            //.verticalScroll(scrollState),
 
         ) {
         Row(
@@ -131,27 +136,33 @@ fun CreateAlert() {
                 .background(Color.Black)
                 .fillMaxWidth()
         )
+        val Now_location = LatLng(9.531650, 76.820450)
+
+        val cameraPositionState = rememberCameraPositionState {
+            position = CameraPosition.fromLatLngZoom(Now_location, 10f)
+        }
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
-                .padding(16.dp)
+                .height(300.dp)
+                .padding(6.dp)
                 .clip(RoundedCornerShape(10.dp))
                 .border(1.dp, Color.Gray, RoundedCornerShape(10.dp))
-
         ) {
-            val Now_location = LatLng(9.531650, 76.820450)
-            val cameraPositionState = rememberCameraPositionState {
-                position = CameraPosition.fromLatLngZoom(Now_location, 10f)
-            }
 
             GoogleMap(
+                onMapClick = { latLng ->
+                    selectedLocation.value = latLng
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 10f)
+                },
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 properties = MapProperties(
                     isTrafficEnabled = true,
                     isBuildingEnabled = true,
                     isIndoorEnabled = true,
+                    isMyLocationEnabled = true,
                     mapType = MapType.NORMAL,
                     mapStyleOptions = MapStyleOptions(
                         """
@@ -189,11 +200,15 @@ fun CreateAlert() {
                 mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM,
                 mergeDescendants = true
             ) {
-                Marker(
-                    state = MarkerState(position = Now_location),
-                    title = "Kerala",
-                    snippet = "God's own country"
-                )
+
+
+                if (selectedLocation.value.latitude != 0.0) {
+                    Marker(
+                        state = MarkerState(position = selectedLocation.value),
+                        title = "Selected Location",
+                        snippet = "Lat: ${selectedLocation.value.latitude}, Lng: ${selectedLocation.value.longitude}"
+                    )
+                }
 
 
             }
@@ -207,135 +222,139 @@ fun CreateAlert() {
                 .background(Color.Black)
                 .fillMaxWidth()
         )
+        Column (
+            modifier = Modifier.verticalScroll(rememberScrollState())
+        ){
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            var SelectedItem by remember { mutableStateOf("") }
-            var expanded by remember { mutableStateOf(false) }
-            val options = listOf(
-                "Animal Alert", "Disaster Alert", "Accident Alert", "Fire Alert", "Other Alert"
-            )
-            ExposedDropdownMenuBox(modifier = Modifier.background(Color.White),
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded }) {
-                OutlinedTextField(
-
-                    value = SelectedItem,
-                    colors = TextFieldDefaults.colors(
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black,
-                        focusedIndicatorColor = Color.Black,
-                        unfocusedIndicatorColor = Color.Black,
-                        disabledPlaceholderColor = Color.Gray,
-                        errorIndicatorColor = Color.Red,
-                        focusedPlaceholderColor = Color.Black,
-//                        placeholderColor= Color.Gray,
-                        unfocusedContainerColor = Color.White,
-                        focusedContainerColor = Color.White,
-
-                        focusedLabelColor = Color.Black,
-                        unfocusedLabelColor = Color.Black
-
-                    ),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Select Category") },
-                    trailingIcon = {
-//                        Icon(Icons.Filled.ArrowDropDown, contentDescription = "Localized description")
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                    },
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
+                val options = listOf(
+                    "Animal Alert", "Disaster Alert", "Accident Alert", "Fire Alert", "Other Alert"
                 )
-                ExposedDropdownMenu(modifier = Modifier.background(Color.White),
+                ExposedDropdownMenuBox(modifier = Modifier.background(Color.White),
                     expanded = expanded,
-                    onDismissRequest = { expanded = false }) {
-                    options.forEach { option ->
-                        DropdownMenuItem(modifier = Modifier.background(Color.White),
-                            text = { Text(text = option) },
-                            onClick = {
-                                SelectedItem = option
-                                expanded = false
-                            })
+                    onExpandedChange = { expanded = !expanded }) {
+                    OutlinedTextField(
+
+                        value = SelectedItem,
+                        colors = TextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedIndicatorColor = Color.Black,
+                            unfocusedIndicatorColor = Color.Black,
+                            disabledPlaceholderColor = Color.Gray,
+                            errorIndicatorColor = Color.Red,
+                            focusedPlaceholderColor = Color.Black,
+//                        placeholderColor= Color.Gray,
+                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = Color.White,
+
+                            focusedLabelColor = Color.Black,
+                            unfocusedLabelColor = Color.Black
+
+                        ),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Select Category") },
+                        trailingIcon = {
+//                        Icon(Icons.Filled.ArrowDropDown, contentDescription = "Localized description")
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(modifier = Modifier.background(Color.White),
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }) {
+                        options.forEach { option ->
+                            DropdownMenuItem(modifier = Modifier.background(Color.White),
+                                text = { Text(text = option) },
+                                onClick = {
+                                    SelectedItem = option
+                                    expanded = false
+                                })
+                        }
+
                     }
 
                 }
 
+
             }
-
-
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {//alert title
             val alertTitle = remember { mutableStateOf("") }
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = alertTitle.value,
-                onValueChange = { alertTitle.value = it },
-                label = { Text("Alert Title") },
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = Color.Black,
-                    focusedIndicatorColor = Color.Black,
-                    unfocusedContainerColor = Color.White,
-                    focusedContainerColor = Color.White,
-                    unfocusedIndicatorColor = Color.Black,
-                    disabledPlaceholderColor = Color.Gray,
-                    errorIndicatorColor = Color.Red,
-                    focusedPlaceholderColor = Color.Black
-                ),
-                shape = RoundedCornerShape(10.dp),
-            )
-
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-
-
-        ) {
-            val alertDesc = remember { mutableStateOf("") }
-            OutlinedTextField(
+            Row(
                 modifier = Modifier
-                    .height(100.dp)
-                    .fillMaxWidth(),
-                value = alertDesc.value,
-                onValueChange = { alertDesc.value = it },
-                label = { Text("Alert Description") },
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = Color.Black,
-                    focusedIndicatorColor = Color.Black,
-                    unfocusedContainerColor = Color.White,
-                    focusedContainerColor = Color.White,
-                    unfocusedIndicatorColor = Color.Black,
-                    disabledPlaceholderColor = Color.Gray,
-                    errorIndicatorColor = Color.Red,
-                    focusedPlaceholderColor = Color.Black
-                ),
-                shape = RoundedCornerShape(10.dp),
-            )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.Absolute.Left,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {//alert title
+
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = alertTitle.value,
+                    onValueChange = { alertTitle.value = it },
+                    label = { Text("Alert Title") },
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        focusedIndicatorColor = Color.Black,
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White,
+                        unfocusedIndicatorColor = Color.Black,
+                        disabledPlaceholderColor = Color.Gray,
+                        errorIndicatorColor = Color.Red,
+                        focusedPlaceholderColor = Color.Black
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                )
+
+            }
+            val alertDesc = remember { mutableStateOf("") }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+
+
+            ) {
+
+                OutlinedTextField(
+                    modifier = Modifier
+                        .height(100.dp)
+                        .fillMaxWidth(),
+                    value = alertDesc.value,
+                    onValueChange = { alertDesc.value = it },
+                    label = { Text("Alert Description") },
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        focusedIndicatorColor = Color.Black,
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White,
+                        unfocusedIndicatorColor = Color.Black,
+                        disabledPlaceholderColor = Color.Gray,
+                        errorIndicatorColor = Color.Red,
+                        focusedPlaceholderColor = Color.Black
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                )
+            }
+            var priority by remember { mutableStateOf("") }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.Absolute.Left,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
 //            var SelectedItem by remember { mutableStateOf("") }
 //            var expanded by remember { mutableStateOf(false) }
 //            val options = listOf(
@@ -385,35 +404,148 @@ fun CreateAlert() {
 //
 //                }
 //            }
-            var selected by remember { mutableStateOf("") }
-            val options = listOf("High", "Medium", "Low")
-            Text(
-                text = "Select Priority :", style = TextStyle(
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
+
+                val options = listOf("High", "Medium", "Low")
+                Text(
+                    text = "Select Priority :", style = TextStyle(
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                    )
                 )
-            )
-            options.forEach() { options ->
-                RadioButton(selected = selected == options, onClick = { selected = options })
-                Text(text = options)
+                options.forEach { options ->
+                    RadioButton(selected = priority == options, onClick = { priority = options })
+                    Text(text = options)
+
+
+                }
             }
 
 
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(0.dp),
-//            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-//               verticalArrangement = Arrangement.aligned(Alignment.CenterVertically)
-        ) {
             var radius by remember { mutableStateOf(50f) }
             val minRadius = 0f
             val maxRadius = 100f
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(0.dp),
+//            horizontalAlignment = Alignment.CenterHorizontally,
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+//               verticalArrangement = Arrangement.aligned(Alignment.CenterVertically)
+            ) {
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = " Radius : ${radius.toInt()} m", style = TextStyle(
+                            color = Color.Black,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    )
+                    Slider(
+                        modifier = Modifier.width(180.dp),
+                        value = radius,
+                        onValueChange = { newValue -> radius = (newValue / 10).toInt() * 10f },
+                        valueRange = minRadius..maxRadius
+                    )
+
+                    OutlinedTextField(
+                        value = radius.toInt().toString(),
+                        onValueChange = {
+                            val input = it.toFloatOrNull()
+                            if (input != null && input in minRadius..maxRadius) {
+                                radius = input
+                            }
+                        },
+                        label = { Text("Radius(m)") },
+                        modifier = Modifier
+                            .width(150.dp)
+                            .height(55.dp),
+//
+                    )
+                }
+            }
+            var selectImage: Uri? by remember { mutableStateOf(null) }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+
+                    .padding(16.dp),
+//            horizontalArrangement = Arrangement.SpaceEvenly,
+//            verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceEvenly
+            )
+
+            {
+
+                val imagepicker =
+                    rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+                        selectImage = uri
+                        //   selectImage = it
+                    }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+
+
+                    if (selectImage != null) {
+                        val painter = rememberAsyncImagePainter(
+                            ImageRequest.Builder(LocalContext.current).data(data = selectImage)
+                                .build()
+                        )
+                        Image(
+                            painter = painter,
+                            contentDescription = "Image",
+                            Modifier
+                                .width(200.dp)
+                                .height(400.dp)
+                                .padding(0.dp)
+                                .border(2.dp, Color.Black),
+                            contentScale = ContentScale.Fit,
+                            alignment = Alignment.Center
+                        )
+                    }
+                }
+
+
+                Button(
+                    modifier = Modifier
+
+                        .height(50.dp),
+
+                    onClick = {
+                        imagepicker.launch(
+                            PickVisualMediaRequest(mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+
+
+                    }, colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xB5F44336),
+                    )
+                ) {
+                    Text(text = "Upload Image")
+
+                }
+            }
+
+
+
+
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -421,131 +553,39 @@ fun CreateAlert() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = " Radius : ${radius.toInt()} m", style = TextStyle(
-                        color = Color.Black,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
-                    )
-                )
-                Slider(
-                    modifier = Modifier.width(180.dp),
-                    value = radius,
-                    onValueChange = { newValue -> radius = (newValue / 10).toInt() * 10f },
-                    valueRange = minRadius..maxRadius
-                )
+                Button(
+                    onClick = {
+                        // Handle the submit button press
+                        println("Submit button pressed")
+                        println("monna alert title: ${alertTitle.value} , alert desc: ${alertDesc.value} , priority: ${priority} , radius: $radius")
+                        sseClient.AlertViewModel.sendAlert(
+                            title = alertTitle.value,
+                            type=SelectedItem,
+                            message = alertDesc.value,
+                            severity = priority,
+                            radius = radius.toInt(),
+                            lat = selectedLocation.value.latitude,
+                            lon = selectedLocation.value.longitude,
+                            user = "Ramanan",
 
-                OutlinedTextField(
-                    value = radius.toInt().toString(),
-                    onValueChange = {
-                        val input = it.toFloatOrNull()
-                        if (input != null && input in minRadius..maxRadius) {
-                            radius = input
-                        }
+//                        media = "selectImage"
+                        )
                     },
-                    label = { Text("Radius(m)") },
-                    modifier = Modifier
-                        .width(150.dp)
-                        .height(55.dp),
-//
-                )
-            }
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-
-                .padding(16.dp),
-//            horizontalArrangement = Arrangement.SpaceEvenly,
-//            verticalAlignment = Alignment.CenterVertically
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceEvenly
-        )
-
-        {
-            var selectImage: Uri? by remember { mutableStateOf(null) }
-            val imagepicker =
-                rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-                    selectImage = uri
-                    //   selectImage = it
-                }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-
-
-                if (selectImage != null) {
-                    val painter = rememberAsyncImagePainter(
-                        ImageRequest.Builder(LocalContext.current).data(data = selectImage).build()
-                    )
-                    Image(
-                        painter = painter,
-                        contentDescription = "Image",
-                        Modifier
-                            .width(200.dp)
-                            .height(400.dp)
-                            .padding(0.dp)
-                            .border(2.dp, Color.Black),
-                        contentScale = ContentScale.Fit,
-                        alignment = Alignment.Center
-                    )
-                }
-            }
-
-
-            Button(
-                modifier = Modifier
-
-                    .height(50.dp),
-
-                onClick = {
-                    imagepicker.launch(
-                        PickVisualMediaRequest(mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
-
-
-                }, colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xB5F44336),
-                )
-            ) {
-                Text(text = "Upload Image")
-
-            }
-        }
-
-
-
-
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = { /*TODO*/ },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE91E63),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFE91E63),
 //                    backgroundColor = Color.Black,
 //                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier
-                    .height(50.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(text = "Create Alert")
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .height(50.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text(text = "Create Alert")
+                }
             }
-        }
 
+        }
     }
 }
 
