@@ -256,6 +256,11 @@ val currentLocation = mutableStateOf(LatLng(10.953551, 75.946148))
 @SuppressLint("UnrememberedMutableState")
 @Composable
 fun MapViewMain(paddingValues: androidx.compose.foundation.layout.PaddingValues) {
+    RequestLocationPermission(
+        onPermissionGranted = {},
+        onPermissionDenied = {},
+        onPermissionsRevoked = {}
+    )
     Column(
         modifier = Modifier
             .fillMaxSize()
