@@ -13,11 +13,9 @@ const val AppName = "Crowdin"
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        sseClient.initSse(sseClient.handler)
         setContent {
-           //SignUpPage()
-            //PokemonApp()
-            Home()
-          //  CrowdinHomeScreen()
+            MainLayout()
         }
 
         WindowCompat.setDecorFitsSystemWindows(window, false)

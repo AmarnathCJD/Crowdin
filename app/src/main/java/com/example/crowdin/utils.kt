@@ -260,3 +260,9 @@ fun TowerInfoScreen() {
     }
 }
 
+fun timeMsToTimeString(timeMs: Long): String {
+    val seconds = timeMs / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    return "${hours % 24}:${minutes % 60}:${seconds % 60}"
+}
