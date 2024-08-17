@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.TextPart
+import com.google.ai.client.generativeai.type.generationConfig
 import kotlinx.coroutines.launch
 
 @SuppressLint("SecretInSource")
@@ -58,10 +59,16 @@ val generativeModel = GenerativeModel(
         role = "system",
         parts = listOf(
             TextPart(
-                text = "You are Crowdin AI, an InApp assistant for the app named 'Crowdin', The app is a Crowd Alert App which alerts the users about nearby traffic related issues, and animal attacks reported, the primary source of data is the users itself, so be like the ai for tha pp and assist users needs, dont answer out of scope questions, also provide disaster relief information, and help users with their account related issues, also no support for markdown formattings."
+                text = "You are Crowdin AI, an InApp assistant for the app named 'Crowdin', The app is a Crowd Alert App which alerts the users about nearby traffic related issues, and animal attacks reported, the primary source of data is the users itself, so be like the ai for tha pp and assist users needs, dont answer out of scope questions, also provide disaster relief information, and help users with their account related issues, also no support for markdown formattings, so dont add formattings to the response, also help if the query is related to latlon etc, which deals with locating, alerts, etc., dont add ** in message for formatting"
             )
         )
-    )
+    ),
+    generationConfig = generationConfig {
+        temperature = 0.75f
+        topP = 1.0f
+        topK = 300
+        maxOutputTokens = 4096
+    },
 )
 
 
@@ -182,13 +189,23 @@ var isAiChat by mutableStateOf(true)
 var scrollStatePosition by mutableIntStateOf(0)
 var convoId by mutableStateOf("")
 var disableButton by mutableStateOf(false)
+var aiChat = generativeModel.startChat(listOf(
+    Content(
+        role = "user",
+        parts = listOf(
+            TextPart(
+                text = "Username: Jenna M Ortega"
+            )
+        )
+    )
+))
 
 suspend fun prompt(prompt: String) {
-    val response = generativeModel.generateContent(
+    val response = aiChat.sendMessage(
         prompt
     )
     if (response.text != null) {
-        sseClient.ChatViewModel.sendMessage("1", response.text!!, "AI")
+        sseClient.ChatViewModel.sendMessage("1", response.text!!.trimIndent(), "AI")
     }
 }
 

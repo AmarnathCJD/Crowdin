@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.closeQuietly
 import org.json.JSONObject
 import java.net.URI
@@ -38,7 +39,8 @@ data class AlertObject(
     val time: Long,
     val severity: String,
     val user: String,
-    val id: Int
+    val id: Int,
+    val icon: String
 )
 
 data class ChatState(
@@ -61,16 +63,7 @@ class AlertViewModel {
     }
 
     fun upsertAlertData(alerts: List<AlertObject>) {
-        val updatedAlerts = alertState.alerts.toMutableList()
-        for (alert in alerts) {
-            val index = updatedAlerts.indexOfFirst { it.id == alert.id }
-            if (index != -1) {
-                updatedAlerts[index] = alert
-            } else {
-                updatedAlerts.add(alert)
-            }
-        }
-        alertState = alertState.copy(alerts = updatedAlerts)
+        alertState = alertState.copy(alerts = alerts)
     }
 
     fun sendAlert(
@@ -80,30 +73,32 @@ class AlertViewModel {
         title: String,
         severity: String,
         user: String,
-        radius: Int
+        radius: Int,
+        type: String,
     ) {
         val time = System.currentTimeMillis()
-        val alert = AlertObject(lat, lon, radius, message, title, time, severity, user, 0)
+        val alert = AlertObject(lat, lon, radius, message, title, time, severity, user, 0, "")
         addAlert(alert)
 
         val client = OkHttpClient()
         val request = okhttp3.Request.Builder()
             .url("$BASE_URL/add_alert")
             .post(
-                okhttp3.RequestBody.create(
-                    "application/json".toMediaTypeOrNull(),
-                    JSONObject(
-                        mapOf(
-                            "lat" to lat,
-                            "lon" to lon,
-                            "message" to message,
-                            "title" to title,
-                            "time" to time,
-                            "severity" to severity,
-                            "user" to user
-                        )
-                    ).toString()
-                )
+                JSONObject(
+                    mapOf(
+                        "type" to type,
+                        "lat" to lat,
+                        "lon" to lon,
+                        "message" to message,
+                        "title" to title,
+                        "time" to time,
+                        "severity" to severity,
+                        "username" to user,
+                        "radius" to radius,
+                        "media" to ""
+                    )
+                ).toString()
+                    .toRequestBody("application/json".toMediaTypeOrNull())
             )
             .build()
 
@@ -122,9 +117,9 @@ class AlertViewModel {
 }
 
 class ChatViewModel {
-    var chatState by mutableStateOf(ChatState())
+    private var chatState by mutableStateOf(ChatState())
 
-    fun addMessage(message: ChatMessage) {
+    private fun addMessage(message: ChatMessage) {
         chatState = chatState.copy(messages = chatState.messages + message)
     }
 
@@ -154,10 +149,6 @@ class ChatViewModel {
 
     fun getMessages(chatId: String): List<ChatMessage> {
         return chatState.messages.filter { it.chatId == chatId }
-    }
-
-    fun getLatestMessage(chatId: String): ChatMessage? {
-        return chatState.messages.filter { it.chatId == chatId }.lastOrNull()
     }
 
     fun getChatsList(mut: MutableState<List<Chat>>) {
@@ -200,17 +191,15 @@ class ChatViewModel {
         val request = okhttp3.Request.Builder()
             .url("$BASE_URL/add_message")
             .post(
-                okhttp3.RequestBody.create(
-                    "application/json".toMediaTypeOrNull(),
-                    JSONObject(
-                        mapOf(
-                            "chat_id" to chatId,
-                            "message" to message,
-                            "user" to sender,
-                            "timestamp" to timestamp
-                        )
-                    ).toString()
-                )
+                JSONObject(
+                    mapOf(
+                        "chat_id" to chatId,
+                        "message" to message,
+                        "user" to sender,
+                        "timestamp" to timestamp
+                    )
+                ).toString()
+                    .toRequestBody("application/json".toMediaTypeOrNull())
             )
             .build()
 
@@ -275,10 +264,13 @@ class SSEClient {
             }
 
             val alertMessages = dataJson.getJSONArray("alerts")
-            //println("Alerts: $alertMessages")
             val alertsToInsert = mutableListOf<AlertObject>()
             for (i in 0 until alertMessages.length()) {
                 val alert = alertMessages.getJSONObject(i)
+                var icn = ""
+                if (alert.has("icon")) {
+                    icn = alert.getString("icon")
+                }
 
                 alertsToInsert.add(
                     AlertObject(
@@ -290,11 +282,10 @@ class SSEClient {
                         alert.getLong("time"),
                         alert.getString("severity"),
                         alert.getString("username"),
-                        alert.getInt("id")
+                        alert.getInt("id"),
+                        icn
                     )
                 )
-                println("Alert: $alert")
-
             }
             AlertViewModel.upsertAlertData(alertsToInsert)
         }

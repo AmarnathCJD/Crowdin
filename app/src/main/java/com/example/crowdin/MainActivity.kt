@@ -16,7 +16,6 @@ class MainActivity : ComponentActivity() {
         sseClient.initSse(sseClient.handler)
         setContent {
             MainLayout()
-            
         }
 
         WindowCompat.setDecorFitsSystemWindows(window, false)

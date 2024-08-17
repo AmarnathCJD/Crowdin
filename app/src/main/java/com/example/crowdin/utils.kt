@@ -5,8 +5,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
 import android.os.Build
 import android.telephony.CellInfo
 import android.telephony.CellInfoGsm
@@ -46,6 +44,10 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -95,11 +97,6 @@ fun resolveCoordinates(latitude: Double, longitude: Double): String {
 }
 
 fun cellTowerLookup(cellId: Int, lac: Int, mcc: Int, mnc: Int): String {
-//    val mcc = 310
-//    val mnc = 404
-//    val lac = 1
-//    val cellId = 5632016
-
     val client = OkHttpClient()
     val request = Request.Builder()
         .url("https://us1.unwiredlabs.com/v2/process")
@@ -289,11 +286,45 @@ fun getCustomBitmapDescriptor(
 ): BitmapDescriptor? {
     var drawable = ContextCompat.getDrawable(context!!, drawableResId) ?: return null
     drawable = DrawableCompat.wrap(drawable)
-    DrawableCompat.setTint(drawable, color.toArgb())
+    if (color != Color.Transparent) {
+        DrawableCompat.setTint(drawable, color.toArgb())
+    }
+   // DrawableCompat.setTint(drawable, color.toArgb())
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
     drawable.setBounds(0, 0, width, height)
     drawable.draw(canvas)
     return BitmapDescriptorFactory.fromBitmap(bitmap)
+}
+
+fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    val R = 6371
+    val dLat = deg2rad(lat2 - lat1)
+    val dLon = deg2rad(lon2 - lon1)
+    val a =
+        sin(dLat / 2) * sin(dLat / 2) +
+                cos(deg2rad(lat1)) * cos(deg2rad(lat2)) *
+                sin(dLon / 2) * sin(dLon / 2)
+    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    val res =  R * c
+    return Math.round(res * 100.0) / 100.0
+}
+
+fun deg2rad(deg: Double): Double {
+    return deg * (Math.PI / 180)
+}
+
+var AlertIconMap = mapOf(
+    "fire" to R.drawable.wildfire,
+    "elephant" to R.drawable.elephant__3_,
+    "tiger" to R.drawable.tiger,
+    "dog" to R.drawable.bernese_mountain,
+    "tornado" to R.drawable.tornado,
+    "landslide" to R.drawable.landslide,
+    "flood" to R.drawable.flooded_house
+)
+
+fun getAlertIcon(iconName: String): Int {
+    return AlertIconMap[iconName] ?: R.drawable.alert
 }
