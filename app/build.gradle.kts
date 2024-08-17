@@ -74,4 +74,9 @@ dependencies {
 
     implementation(libs.generativeai)
     implementation(libs.coil.compose)
+
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.accompanist.navigation.animation)
+
+    implementation(libs.androidx.datastore.preferences)
 }

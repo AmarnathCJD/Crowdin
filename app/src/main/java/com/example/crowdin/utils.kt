@@ -322,9 +322,28 @@ var AlertIconMap = mapOf(
     "dog" to R.drawable.bernese_mountain,
     "tornado" to R.drawable.tornado,
     "landslide" to R.drawable.landslide,
-    "flood" to R.drawable.flooded_house
+    "flood" to R.drawable.flooded_house,
 )
 
 fun getAlertIcon(iconName: String): Int {
     return AlertIconMap[iconName] ?: R.drawable.alert
+}
+
+fun addNavEntry(route: String) {
+    NavHistory.value = (NavHistory.value + route).toMutableList()
+}
+
+fun popNavEntry(): String {
+    val history = NavHistory.value
+    if (history.size == 1) {
+        return history[0]
+    } else if (history.size == 0) {
+        return "Home"
+    }
+    // else return last 2nd element
+    return history[history.size - 2]
+}
+
+fun peekNavEntry(): String {
+    return NavHistory.value.last()
 }

@@ -1,6 +1,7 @@
 package com.example.crowdin
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -45,6 +46,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.TextPart
@@ -73,7 +75,11 @@ val generativeModel = GenerativeModel(
 
 
 @Composable
-fun ChatPage() {
+fun ChatPage(nav: NavController) {
+//    BackHandler {
+//        nav.navigate(popNavEntry())
+//    }
+
     val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
@@ -187,8 +193,8 @@ var chatText by mutableStateOf("")
 var chatTitle by mutableStateOf("Crowdin AI Chat")
 var isAiChat by mutableStateOf(true)
 var scrollStatePosition by mutableIntStateOf(0)
-var convoId by mutableStateOf("")
-var disableButton by mutableStateOf(false)
+var convoId by mutableStateOf(1)
+var myName by mutableStateOf("User")
 var aiChat = generativeModel.startChat(listOf(
     Content(
         role = "user",
@@ -243,9 +249,9 @@ fun ChatInput() {
                             .clickable {
                                 if (chatText.isEmpty()) return@clickable
                                 val prompt = chatText
-                                sseClient.ChatViewModel.sendMessage("1", chatText, "User")
+                                sseClient.ChatViewModel.sendMessage(convoId.toString(), chatText, myName)
                                 chatText = ""
-                                if (isAiChat) {
+                                if (convoId == 1) {
                                     coroutineScope.launch {
                                         typingAnimation = 1
                                         prompt(prompt)
@@ -326,10 +332,10 @@ fun ChatList(scrollState: ScrollState) {
         LaunchedEffect(scrollStatePosition) {
             scrollState.scrollTo(scrollStatePosition)
         }
-        if (sseClient.ChatViewModel.getMessages("1").isNotEmpty()) {
+        if (sseClient.ChatViewModel.getMessages(convoId.toString()).isNotEmpty()) {
             scrollStatePosition = scrollState.maxValue
         }
-        sseClient.ChatViewModel.getMessages("1").forEach {
+        sseClient.ChatViewModel.getMessages(convoId.toString()).forEach {
             ChatItem(it)
         }
         if (typingAnimation != 0) {
@@ -350,7 +356,7 @@ fun ChatList(scrollState: ScrollState) {
 
 @Composable
 fun ChatItem(chatData: ChatMessage) {
-    val isUser = chatData.sender == "User"
+    val isUser = chatData.sender == myName
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -423,7 +429,7 @@ fun ChatItem(chatData: ChatMessage) {
 }
 
 @Composable
-fun OpenChatsList() {
+fun OpenChatsList(nav: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -480,27 +486,32 @@ fun OpenChatsList() {
                             BottomIconItem(
                                 imageRes = R.drawable.pets_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                                 color = ColorPalette.secondary,
-                                name = "Animals"
+                                name = "Animals",
+                                nav = nav
                             )
                             BottomIconItem(
                                 imageRes = R.drawable.notifications_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                                 color = ColorPalette.secondary,
-                                name = "Alerts"
+                                name = "Alerts",
+                                nav = nav
                             )
                             BottomIconItem(
                                 imageRes = R.drawable.roofing_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                                 color = ColorPalette.redish,
-                                name = "Home"
+                                name = "Home",
+                                nav = nav
                             )
                             BottomIconItem(
                                 imageRes = R.drawable.my_location_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                                 color = ColorPalette.secondary,
-                                name = "Location"
+                                name = "Location",
+                                nav = nav
                             )
                             BottomIconItem(
                                 imageRes = R.drawable.admin_panel_settings_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                                 color = ColorPalette.secondary,
-                                name = "Account"
+                                name = "Account",
+                                nav = nav
                             )
                         }
                     }
@@ -566,13 +577,14 @@ fun AllChatTitle() {
 }
 
 class Chat(
-    val chatId: String,
-    val name: String
+    val chatId: Int,
+    val name: String,
+    val description: String = ""
 )
 
 @Composable
 fun AllChatList(scrollState: ScrollState) {
-    val chatList = remember { mutableStateOf(listOf(Chat("1", "Crowdin AI"))) }
+    val chatList = remember { mutableStateOf(listOf(Chat(1, "Crowdin AI", "Your InApp Assistant")))}
     LaunchedEffect(Unit) {
         sseClient.ChatViewModel.getChatsList(chatList)
     }

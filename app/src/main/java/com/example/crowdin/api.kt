@@ -19,7 +19,7 @@ import org.json.JSONObject
 import java.net.URI
 import java.time.Duration
 
-var BASE_URL = "https://63da-117-193-79-225.ngrok-free.app"
+var BASE_URL = "https://e8b9-136-232-57-110.ngrok-free.app"
 
 var sseClient = SSEClient()
 
@@ -63,7 +63,14 @@ class AlertViewModel {
     }
 
     fun upsertAlertData(alerts: List<AlertObject>) {
-        alertState = alertState.copy(alerts = alerts)
+        val updatedAlerts = alertState.alerts.toMutableList()
+        for (alert in alerts) {
+            if (updatedAlerts.none { it.id == alert.id }) {
+                updatedAlerts.add(alert)
+            }
+        }
+
+        alertState = alertState.copy(alerts = updatedAlerts)
     }
 
     fun sendAlert(
@@ -135,6 +142,7 @@ class ChatViewModel {
     }
 
     fun upsertChat(chatId: String, messages: List<ChatMessage>) {
+        println("chatId: $chatId, messages: $messages")
         val chatMessages = chatState.messages.filter { it.chatId == chatId }
         for (message in messages) {
             if (chatMessages.none { it.timestamp == message.timestamp }) {
@@ -148,6 +156,7 @@ class ChatViewModel {
     }
 
     fun getMessages(chatId: String): List<ChatMessage> {
+        println("chatId: $chatId, messages: ${chatState.messages}")
         return chatState.messages.filter { it.chatId == chatId }
     }
 
@@ -171,9 +180,8 @@ class ChatViewModel {
                         val chats = json?.getJSONArray("chats")
                         if (chats != null) {
                             for (i in 0 until chats.length()) {
-                                // {"chat_id": "chat1", "name": "Chat 1"}
                                 val chat = chats.getJSONObject(i)
-                                mut.value += Chat(chat.getString("chat_id"), chat.getString("name"))
+                                mut.value += Chat(chat.getInt("id"), chat.getString("title"), chat.getString("message"))
                             }
                         }
                     }
@@ -335,14 +343,68 @@ class SSEClient {
             Log.i("SSE_CONNECTION", comment)
         }
     }
+}
 
-    fun disconnect() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                eventSourceSse?.closeQuietly()
-            } catch (e: Exception) {
-                e.printStackTrace()
+fun updateUserLocation(username: String, lat: Double, lon: Double) {
+    val client = OkHttpClient()
+    val request = okhttp3.Request.Builder()
+        .url("$BASE_URL/update_user_location")
+        .post(
+            JSONObject(
+                mapOf(
+                    "username" to username,
+                    "lat" to lat,
+                    "lon" to lon
+                )
+            ).toString()
+                .toRequestBody("application/json".toMediaTypeOrNull())
+        )
+        .build()
+
+    client.newCall(request).enqueue(object : okhttp3.Callback {
+        override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+            Log.e(AppName, "Failed to update location: ${e.message}")
+        }
+
+        override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+            println("response: $response")
+            if (!response.isSuccessful) {
+                Log.e(AppName, "Failed to update location: ${response.code}")
             }
         }
-    }
+    })
+}
+
+fun getNearbyUsers(username: String, radius: Int, nearbyUsersCount: MutableState<Int>, scanning: MutableState<Boolean>) {
+    val client = OkHttpClient()
+    val request = okhttp3.Request.Builder()
+        .url("$BASE_URL/count_nearby_peoples")
+        .post(
+            JSONObject(
+                mapOf(
+                    "username" to username,
+                    "radius" to radius
+                )
+            ).toString()
+                .toRequestBody("application/json".toMediaTypeOrNull())
+        )
+        .build()
+
+    client.newCall(request).enqueue(object : okhttp3.Callback {
+        override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+            Log.e(AppName, "Failed to get nearby users: ${e.message}")
+            scanning.value = false
+        }
+
+        override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+            if (!response.isSuccessful) {
+                Log.e(AppName, "Failed to get nearby users: ${response.code}")
+                scanning.value = false
+            } else {
+                val json = response.body?.string()?.let { JSONObject(it) }
+                nearbyUsersCount.value = json?.getInt("count") ?: 0
+                scanning.value = false
+            }
+        }
+    })
 }

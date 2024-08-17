@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
+import androidx.navigation.NavController
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.CameraPosition
@@ -68,7 +69,7 @@ import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
-fun MainLayout() {
+fun MainLayout(nav: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -141,36 +142,41 @@ fun MainLayout() {
                             )
                     ) {
                         BottomIconItem(
-                            imageRes = R.drawable.pets_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            imageRes = R.drawable.forum_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                             color = ColorPalette.secondary,
-                            name = "Animals"
+                            name = "Chats",
+                            nav = nav
                         )
                         BottomIconItem(
                             imageRes = R.drawable.notifications_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                             color = ColorPalette.secondary,
-                            name = "Alerts"
+                            name = "Alerts",
+                            nav = nav
                         )
                         BottomIconItem(
                             imageRes = R.drawable.roofing_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                             color = ColorPalette.secondary,
-                            name = "Home"
+                            name = "Home",
+                            nav = nav
                         )
                         BottomIconItem(
                             imageRes = R.drawable.my_location_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                             color = ColorPalette.redish,
-                            name = "Location"
+                            name = "Location",
+                            nav = nav
                         )
                         BottomIconItem(
                             imageRes = R.drawable.admin_panel_settings_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                             color = ColorPalette.secondary,
-                            name = "Account"
+                            name = "Account",
+                            nav = nav
                         )
                     }
                 }
             },
             containerColor = Color.Transparent,
             content = {
-                MapViewMain(it)
+                MapViewMain(it, nav)
             }
         )
     }
@@ -218,7 +224,7 @@ val currentLocation = mutableStateOf(LatLng(10.953551, 75.946148))
 
 @SuppressLint("UnrememberedMutableState")
 @Composable
-fun MapViewMain(paddingValues: androidx.compose.foundation.layout.PaddingValues) {
+fun MapViewMain(paddingValues: PaddingValues, nav: NavController) {
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(currentLocation.value, 11f)
     }
@@ -265,7 +271,7 @@ fun MapViewMain(paddingValues: androidx.compose.foundation.layout.PaddingValues)
             )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            InfoPopupBoxWithZIndex()
+            InfoPopupBoxWithZIndex(nav)
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
@@ -370,7 +376,8 @@ fun MapViewMain(paddingValues: androidx.compose.foundation.layout.PaddingValues)
                                     location = LatLng(alert.lat, alert.lon),
                                     radius = alert.radius.toDouble(),
                                     type = alert.severity,
-                                    bgColor = Color(0xFFE3F2FD)
+                                    bgColor = Color(0xFFE3F2FD),
+                                    id = alert.id
                                 )
                                 popupState.value = true
                                 Thread {
@@ -395,6 +402,7 @@ class PopupData(
     val radius: Double,
     val type: String,
     val bgColor: Color = Color.White,
+    val id: Int
 )
 
 var PopupDataObj = mutableStateOf(
@@ -404,7 +412,8 @@ var PopupDataObj = mutableStateOf(
         location = LatLng(10.953551, 75.946148),
         radius = 100.0,
         type = "~",
-        bgColor = Color(0xFFE3F2FD)
+        bgColor = Color(0xFFE3F2FD),
+        id = 0
     )
 )
 
@@ -413,7 +422,7 @@ val locationNameForPopup = mutableStateOf("")
 val popupState = mutableStateOf(false)
 
 @Composable
-fun InfoPopupBoxWithZIndex() {
+fun InfoPopupBoxWithZIndex(nav: NavController) {
     val distance = remember { mutableDoubleStateOf(0.0) }
     if (popupState.value) {
             distance.doubleValue = calculateDistance(
@@ -602,7 +611,9 @@ fun InfoPopupBoxWithZIndex() {
                     Spacer(modifier = Modifier.width(3.dp))
                     Button(
                         onClick = {
-                            // share alert
+                            convoId = PopupDataObj.value.id
+                            chatTitle = PopupDataObj.value.title
+                            nav.navigate("ChatView")
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF05445e),

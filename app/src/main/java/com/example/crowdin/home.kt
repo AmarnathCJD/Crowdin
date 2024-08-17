@@ -1,6 +1,8 @@
 package com.example.crowdin
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.text.format.DateUtils
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -68,15 +70,26 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.delay
 import android.media.MediaPlayer
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.core.app.ActivityCompat
+import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 var nearbyAlertsEnabled = mutableStateOf(true)
+var userName = mutableStateOf("rlx")
+
+@SuppressLint("MutableCollectionMutableState")
+var NavHistory = mutableStateOf(mutableListOf<String>())
 
 @Composable
-fun Home() {
+fun Home(nav: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -132,24 +145,28 @@ fun Home() {
                             )
                     ) {
                         BottomIconItem(
-                            imageRes = R.drawable.pets_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            imageRes = R.drawable.forum_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                             color = ColorPalette.secondary,
-                            name = "Animals"
+                            name = "Chats",
+                            nav = nav
                         )
                         BottomIconItem(
                             imageRes = R.drawable.notifications_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                             color = ColorPalette.secondary,
-                            name = "Alerts"
+                            name = "Alerts",
+                            nav = nav
                         )
                         BottomIconItem(
                             imageRes = R.drawable.roofing_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                             color = ColorPalette.redish,
-                            name = "Home"
+                            name = "Home",
+                            nav = nav
                         )
                         BottomIconItem(
                             imageRes = R.drawable.my_location_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                             color = ColorPalette.secondary,
-                            name = "Location"
+                            name = "Location",
+                            nav = nav
                         )
                         BottomIconItem(
                             imageRes = R.drawable.admin_panel_settings_24dp_e8eaed_fill0_wght400_grad0_opsz24,
@@ -161,18 +178,21 @@ fun Home() {
             },
             containerColor = Color.Transparent,
             content = {
-                HomeMain(it)
+                HomeMain(it, nav)
             }
         )
     }
 }
 
 @Composable
-fun BottomIconItem(imageRes: Int, color: Color, name: String = "Icon") {
+fun BottomIconItem(imageRes: Int, color: Color, name: String = "Icon", nav: NavController? = null) {
     Box(
         modifier = Modifier
             .size(50.dp)
-            .clip(RoundedCornerShape(20.dp)),
+            .clip(RoundedCornerShape(20.dp))
+            .clickable {
+                nav?.navigate(name)
+            },
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -195,10 +215,8 @@ fun BottomIconItem(imageRes: Int, color: Color, name: String = "Icon") {
     }
 }
 
-@SuppressLint("MissingPermission")
 @Composable
-fun HomeMain(it: PaddingValues) {
-    val loggedInUser by remember { mutableStateOf("Jenna M Ortega") }
+fun HomeMain(it: PaddingValues, nav: NavController) {
     Column(
         modifier = Modifier
             .padding(
@@ -208,7 +226,7 @@ fun HomeMain(it: PaddingValues) {
             .verticalScroll(rememberScrollState())
     ) {
 
-        WelcomeMessage(loggedInUser = "Jenna M Ortega")
+        WelcomeMessage(loggedInUser = "@" + userName.value)
 
         val locationName = remember { mutableStateOf("Unknown") }
         val latlng = remember { mutableStateOf(Pair(0.0, 0.0)) }
@@ -264,23 +282,33 @@ fun HomeMain(it: PaddingValues) {
                     "Crowd levels change"
         )
 
-        RequestLocationPermission(
-            onPermissionGranted = {},
-            onPermissionDenied = {},
-            onPermissionsRevoked = {}
-        )
-
-
         if (locationName.value == "Unknown") {
             val accuracy = Priority.PRIORITY_HIGH_ACCURACY
             val client = LocationServices.getFusedLocationProviderClient(LocalContext.current)
             val location = remember { mutableStateOf<Pair<Double, Double>?>(null) }
+
+            if (ActivityCompat.checkSelfPermission(
+                    LocalContext.current,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    LocalContext.current,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                RequestLocationPermission(
+                    onPermissionGranted = {},
+                    onPermissionDenied = {},
+                    onPermissionsRevoked = {}
+                )
+                return
+            }
 
             client.getCurrentLocation(accuracy, CancellationTokenSource().token)
                 .addOnSuccessListener { loc ->
                     loc?.let {
                         location.value = Pair(it.latitude, it.longitude)
                         latlng.value = Pair(it.latitude, it.longitude)
+                        updateUserLocation(userName.value, it.latitude, it.longitude)
                         Thread {
                             locationName.value = resolveCoordinates(it.latitude, it.longitude)
                         }.start()
@@ -290,6 +318,7 @@ fun HomeMain(it: PaddingValues) {
                     locationName.value = "- Unknown -"
                 }
         }
+        NearbyPeople()
 
         Column(
             modifier = Modifier
@@ -307,7 +336,9 @@ fun HomeMain(it: PaddingValues) {
                     .padding(horizontal = 20.dp)
                     .fillMaxWidth()
                     .height(45.dp)
-                    .clickable {  },
+                    .clickable {
+                        nav.navigate("AddAlert")
+                    },
                 shape = RoundedCornerShape(10.dp),
                 elevation = CardDefaults.cardElevation(6.dp)
             ) {
@@ -361,6 +392,97 @@ fun HomeMain(it: PaddingValues) {
             distance = 100L,
             time = System.currentTimeMillis(),
         )
+    }
+}
+
+val nearByPeople = mutableIntStateOf(0)
+val nearByPeopleScanEnabled = mutableStateOf(false)
+
+@Composable
+fun NearbyPeople() {
+    var sliderPosition by remember { mutableFloatStateOf(0f) }
+    val radiusFactor = 100f
+    Row (
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(6.dp)
+                .background(Color(0xFFF3E5F5), shape = RoundedCornerShape(10.dp)),
+            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+                    .padding(top = 6.dp)
+                    .background(Color(0xFFF3E5F5), shape = RoundedCornerShape(10.dp)),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "People Nearby: ${nearByPeople.intValue}",
+                    color = Color(0xFF9575CD),
+                    modifier = Modifier.padding(vertical = 1.dp, horizontal = 18.dp)
+                        .clip(shape = RoundedCornerShape(14.dp)),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+            }
+            Text(
+                text = "Radius: ${radiusFactor * sliderPosition} km",
+                color = Color(0xFF9575CD),
+                fontWeight = FontWeight.Bold,
+                fontSize = 10.sp
+            )
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(horizontal = 6.dp),
+            ) {
+                Slider(
+                    value = sliderPosition,
+                    onValueChange = { sliderPosition = it },
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color(0xFFFDD835),
+                        activeTrackColor = Color(0xFFF4511E),
+                        inactiveTrackColor = Color(0xFFF8BBD0)
+                    ),
+                    valueRange = 0f..0.25f,
+                    modifier = Modifier.width(150.dp)
+                )
+            }
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .padding(bottom = 2.dp)
+            ) {
+                Button(
+                    onClick = {
+                        if (!nearByPeopleScanEnabled.value) {
+                            nearByPeopleScanEnabled.value = true
+                            getNearbyUsers(userName.value, (radiusFactor * sliderPosition).toInt(), nearByPeople, nearByPeopleScanEnabled)
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (nearByPeopleScanEnabled.value) Color(0xFFE1BEE7) else Color(0xFF9575CD),
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.padding(6.dp),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(
+                        text = if (nearByPeopleScanEnabled.value) "Stop Scanning" else "Start Scanning",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
     }
 }
 
