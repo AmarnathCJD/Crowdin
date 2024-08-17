@@ -1,20 +1,27 @@
 package com.example.crowdin
 
+import android.Manifest
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -26,14 +33,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.LocationSource
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.JointType
 import com.google.android.gms.maps.model.LatLng
@@ -275,21 +279,26 @@ fun MapViewMain(paddingValues: androidx.compose.foundation.layout.PaddingValues)
         val cameraPositionState = rememberCameraPositionState {
             position = CameraPosition.fromLatLngZoom(kerala, 10f)
         }
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            onMyLocationClick = {
-                currentLocation.value = LatLng(it.latitude, it.longitude)
-                println("My location clicked: $it")
-            },
-            properties = MapProperties(
-                isTrafficEnabled = true,
-                isBuildingEnabled = true,
-                isIndoorEnabled = true,
-                isMyLocationEnabled = true,
-                mapType = MapType.NORMAL,
-                mapStyleOptions = MapStyleOptions(
-                    """
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            InfoPopupBoxWithZIndex()
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState,
+                onMyLocationClick = {
+                    currentLocation.value = LatLng(it.latitude, it.longitude)
+                    println("My location clicked: $it")
+                },
+                properties = MapProperties(
+                    isTrafficEnabled = true,
+                    isBuildingEnabled = true,
+                    isIndoorEnabled = true,
+                    isMyLocationEnabled = isPermissionGranted(
+                        LocalContext.current, Manifest.permission.ACCESS_FINE_LOCATION
+                    ),
+                    mapType = MapType.NORMAL,
+                    mapStyleOptions = MapStyleOptions(
+                        """
                 [
                     {
                         "featureType": "poi",
@@ -320,72 +329,254 @@ fun MapViewMain(paddingValues: androidx.compose.foundation.layout.PaddingValues)
                     }
                 ]
                 """.trimIndent()
+                    )
+                ),
+                uiSettings = MapUiSettings(
+                    compassEnabled = true,
+                    scrollGesturesEnabled = true,
+                    scrollGesturesEnabledDuringRotateOrZoom = true,
+                    rotationGesturesEnabled = true,
+                    mapToolbarEnabled = false,
+                    zoomControlsEnabled = true, // make it false one done with development
+                    zoomGesturesEnabled = true,
+                ),
+                mapColorScheme = ComposeMapColorScheme.LIGHT,
+                mergeDescendants = true
+            ) {
+
+                Marker(
+                    state = MarkerState(position = northamerica),
+                    title = "North America",
+                    snippet = "The continent"
                 )
-            ),
-            uiSettings = MapUiSettings(
-                compassEnabled = true,
-                scrollGesturesEnabled = true,
-                scrollGesturesEnabledDuringRotateOrZoom = true,
-                rotationGesturesEnabled = true,
-                mapToolbarEnabled = false,
-                zoomControlsEnabled = true, // make it false one done with development
-                zoomGesturesEnabled = true,
-            ),
-            mapColorScheme = ComposeMapColorScheme.LIGHT,
-            mergeDescendants = true
-        ) {
-            Marker(
-                state = MarkerState(position = northamerica),
-                title = "North America",
-                snippet = "The continent"
-            )
-            Marker(
-                state = MarkerState(position = kerala),
-                title = "Kerala",
-                snippet = "God's own country"
-            )
-
-            Marker(
-                state = MarkerState(position = points[0]),
-                title = "Kerala",
-                snippet = "God's own countryMMMM",
-            )
-
-            Polyline(
-                points = points,
-                color = Color.Red,
-                width = 20f,
-                jointType = JointType.BEVEL
-            )
-
-            Circle(
-                center = kerala, radius = 000000.0, fillColor = Color(0x220000FF),
-                tag = "circle", strokeColor = Color(0x220000FF), strokeWidth = 5f
-            )
-
-            for (alert in sseClient.AlertViewModel.getAllAlerts()) {
-                Circle(
-                    center = LatLng(alert.lat, alert.lon),
-                    radius = alert.radius.toDouble() * 1000,
-                    fillColor = Color(0x220000FF),
-                    tag = alert.id.toString(),
-                    strokeColor = Color(0x220000FF),
-                    strokeWidth = 5f
+                Marker(
+                    state = MarkerState(position = kerala),
+                    title = "Kerala",
+                    snippet = "God's own country"
                 )
 
                 Marker(
-                    state = MarkerState(position = LatLng(alert.lat, alert.lon)),
-                    title = alert.title,
-                    snippet = alert.message,
-                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
-                    onInfoWindowClick = {
-                        println("Info window clicked: $it")
-                    },
-                    onClick = {
-                        println("Marker clicked: $it")
-                        return@Marker true
-                    }
+                    state = MarkerState(position = points[0]),
+                    title = "Kerala",
+                    snippet = "God's own countryMMMM",
                 )
+
+                Polyline(
+                    points = points,
+                    color = Color.Red,
+                    width = 20f,
+                    jointType = JointType.BEVEL
+                )
+
+                Circle(
+                    center = kerala, radius = 000000.0, fillColor = Color(0x220000FF),
+                    tag = "circle", strokeColor = Color(0x220000FF), strokeWidth = 5f
+                )
+
+                for (alert in sseClient.AlertViewModel.getAllAlerts()) {
+                    Circle(
+                        center = LatLng(alert.lat, alert.lon),
+                        radius = alert.radius.toDouble() * 1000,
+                        fillColor = Color(0x220000FF),
+                        tag = alert.id.toString(),
+                        strokeColor = Color(0x220000FF),
+                        strokeWidth = 5f
+                    )
+
+                    Marker(
+                        state = MarkerState(position = LatLng(alert.lat - 0.035, alert.lon)),
+                        title = alert.title,
+                        snippet = alert.message,
+                        icon = getCustomBitmapDescriptor(
+                            LocalContext.current,
+                            R.drawable.emergency_heat_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            Color.Red,
+                            170,
+                            170,
+                        ),
+
+                        )
+                }
+            }
+        }
+    }
+}
+
+class PopupData(
+    val title: String,
+    val description: String,
+    val location: LatLng,
+    val radius: Double,
+    val type: String,
+    val bgColor: Color = Color.White,
+)
+
+var dummyPopupData = PopupData(
+    title = "Flood Alert",
+    description = "Heavy rain expected in the area, please take necessary precautions",
+    location = LatLng(10.953551, 75.946148),
+    radius = 1000.0,
+    type = "Flood",
+    bgColor = Color(0xFFE3F2FD)
+)
+
+val popupState = mutableStateOf(true)
+
+@Composable
+fun InfoPopupBoxWithZIndex() {
+    if (popupState.value) {
+        Box(
+            modifier = Modifier
+                .zIndex(1f)
+                .fillMaxSize()
+                .padding(bottom = 5.dp)
+                .padding(horizontal = 5.dp)
+                .clip(RoundedCornerShape(20.dp)),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Column(
+                modifier = Modifier
+                    .background(dummyPopupData.bgColor)
+                    .clip(RoundedCornerShape(20.dp))
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                    ) {
+                        Text(
+                            text = dummyPopupData.title,
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    Color(0xFFB71C1C),
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                .clickable {
+                                    println("Update status clicked: ${
+                                        currentLocation.value.latitude
+                                    }, ${
+                                        currentLocation.value.longitude
+                                    }")
+                                    // update status
+                                }
+                        ) {
+                            Text(
+                                text = "Update Status",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "Close",
+                        color = Color(0xFF05445e),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .clickable { popupState.value = false }
+                    )
+                }
+                Spacer(modifier = Modifier.height(5.dp))
+                Text(
+                    text = dummyPopupData.description,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Normal
+                )
+
+                Spacer(modifier = Modifier.height(5.dp))
+                Row {
+                    Text(
+                        text = "${dummyPopupData.location}",
+                        color = Color(0xFF05445e),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = " | ",
+                        color = Color(0xFF05445e),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = "${dummyPopupData.radius} km",
+                        color = Color(0xFF05445e),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                // add buttons to get directions, call emergency, etc
+                Row(
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(
+                        onClick = {
+                            // get directions
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF05445e),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        elevation = ButtonDefaults.elevatedButtonElevation()
+                    ) {
+                        Text(
+                            text = "Get To Safety",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            // call emergency
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF05445e),
+                            contentColor = Color.White
+                        ),
+                        elevation = ButtonDefaults.elevatedButtonElevation(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text(
+                            text = "Call Emergency",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            // share alert
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF05445e),
+                            contentColor = Color.White
+                        ),
+                        elevation = ButtonDefaults.elevatedButtonElevation(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text(
+                            text = "Support Chat",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
             }
         }
     }
