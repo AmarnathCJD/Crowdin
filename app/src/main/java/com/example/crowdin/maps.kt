@@ -520,7 +520,7 @@ fun InfoPopupBoxWithZIndex(nav: NavController) {
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.SpaceAround,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     val infiniteTransition = rememberInfiniteTransition(label = "transition1")

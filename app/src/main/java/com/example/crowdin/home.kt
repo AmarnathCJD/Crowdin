@@ -9,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -84,9 +85,6 @@ import kotlinx.coroutines.launch
 
 var nearbyAlertsEnabled = mutableStateOf(true)
 var userName = mutableStateOf("rlx")
-
-@SuppressLint("MutableCollectionMutableState")
-var NavHistory = mutableStateOf(mutableListOf<String>())
 
 @Composable
 fun Home(nav: NavController) {
@@ -190,9 +188,13 @@ fun BottomIconItem(imageRes: Int, color: Color, name: String = "Icon", nav: NavC
         modifier = Modifier
             .size(50.dp)
             .clip(RoundedCornerShape(20.dp))
-            .clickable {
-                nav?.navigate(name)
-            },
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {
+                    nav?.navigate(name)
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
         Column(

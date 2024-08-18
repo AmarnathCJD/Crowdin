@@ -67,8 +67,7 @@ class AlertViewModel {
         val updatedAlerts = alertState.alerts.toMutableList()
         for (alert in alerts) {
             if (updatedAlerts.none { it.id == alert.id }) {
-                if (!isFirstReqAfterInit) {
-                    println("Alert received: ${alert.title}")
+                if (!isFirstReqAfterInit && alert.user != userName.value) {
                     notification.value = Notification(alert.title, alert.message)
                     isTherePendingAlert.value = true
                 }
@@ -148,7 +147,6 @@ class ChatViewModel {
     }
 
     fun upsertChat(chatId: String, messages: List<ChatMessage>) {
-        println("chatId: $chatId, messages: $messages")
         val chatMessages = chatState.messages.filter { it.chatId == chatId }
         for (message in messages) {
             if (chatMessages.none { it.timestamp == message.timestamp }) {
@@ -162,7 +160,6 @@ class ChatViewModel {
     }
 
     fun getMessages(chatId: String): List<ChatMessage> {
-        println("chatId: $chatId, messages: ${chatState.messages}")
         return chatState.messages.filter { it.chatId == chatId }
     }
 
@@ -310,7 +307,6 @@ class SSEClient {
     }
 
     fun initSse(sseHandler: SSEHandler) {
-        println("initSse")
         this.sseHandlers = sseHandler
         val eventHandler = sseHandlers?.let { DefaultEventHandler(it) }
         try {
@@ -322,14 +318,13 @@ class SSEClient {
                 .build()
 
             eventSourceSse?.start()
-            println("SSE started")
+            println("SSE Event Handler Started")
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     private class DefaultEventHandler(private val sseHandler: SSEHandler) : EventHandler {
-
         override fun onOpen() {
             sseHandler.onSSEConnectionOpened()
         }
@@ -374,7 +369,6 @@ fun updateUserLocation(username: String, lat: Double, lon: Double) {
         }
 
         override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-            println("response: $response")
             if (!response.isSuccessful) {
                 Log.e(AppName, "Failed to update location: ${response.code}")
             }

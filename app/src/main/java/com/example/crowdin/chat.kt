@@ -510,7 +510,7 @@ fun OpenChatsList(nav: NavController) {
                                 )
                         ) {
                             BottomIconItem(
-                                imageRes = R.drawable.pets_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                                imageRes = R.drawable.forum_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                                 color = ColorPalette.redish,
                                 name = "Chats",
                                 nav = nav
