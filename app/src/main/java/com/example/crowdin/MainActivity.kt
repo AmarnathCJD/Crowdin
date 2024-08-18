@@ -15,11 +15,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.flow.map
 
 const val AppName = "Crowdin"
 
@@ -28,6 +26,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         sseClient.initSse(sseClient.handler)
         setContent {
+            Notify()
             val nav = rememberNavController()
             NavHost(navController = nav, startDestination = "Home") {
                 composable(
@@ -55,11 +54,10 @@ class MainActivity : ComponentActivity() {
                         .getString("auth-key", null)
                     if (authKey == null || authKey == "123456") {
                         nav.navigate("SignIn")
-                    }
-                    if (authKey != null) {
+                    } else {
                         userName.value = authKey
+                        Home(nav)
                     }
-                    Home(nav = nav)
                 }
                 composable(
                     "Settings",

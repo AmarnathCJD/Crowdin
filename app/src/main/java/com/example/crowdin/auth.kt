@@ -684,6 +684,7 @@ fun SignInPage(nav: NavController) {
                                 }
 
                                 override fun onResponse(call: Call, response: okhttp3.Response) {
+                                    println("Response received: ${response.body?.string()}")
                                     if (response.isSuccessful) {
                                         authKey.value = username.value
                                         isAuthed.value = true

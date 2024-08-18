@@ -281,39 +281,6 @@ fun MapViewMain(paddingValues: PaddingValues, nav: NavController) {
                         LocalContext.current, Manifest.permission.ACCESS_FINE_LOCATION
                     ),
                     mapType = MapType.NORMAL,
-                    mapStyleOptions = MapStyleOptions(
-                        """
-                [
-                    {
-                        "featureType": "poi",
-                        "elementType": "labels",
-                        "stylers": [
-                            {
-                                "visibility": "off"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "transit",
-                        "elementType": "labels",
-                        "stylers": [
-                            {
-                                "visibility": "on"
-                            }
-                        ]
-                    },
-                    {
-                        "featureType": "road",
-                        "elementType": "labels",
-                        "stylers": [
-                            {
-                                "visibility": "on"
-                            }
-                        ]
-                    }
-                ]
-                """.trimIndent()
-                    )
                 ),
                 uiSettings = MapUiSettings(
                     compassEnabled = true,
@@ -321,7 +288,7 @@ fun MapViewMain(paddingValues: PaddingValues, nav: NavController) {
                     scrollGesturesEnabledDuringRotateOrZoom = true,
                     rotationGesturesEnabled = true,
                     mapToolbarEnabled = false,
-                    zoomControlsEnabled = true, // make it false one done with development
+                    zoomControlsEnabled = true,
                     zoomGesturesEnabled = true,
                 ),
                 mapColorScheme = ComposeMapColorScheme.LIGHT,
@@ -479,7 +446,6 @@ fun InfoPopupBoxWithZIndex(nav: NavController) {
                                             currentLocation.value.longitude
                                         }"
                                     )
-                                    // update status
                                 }
                         ) {
                             Text(

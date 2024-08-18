@@ -19,7 +19,7 @@ import org.json.JSONObject
 import java.net.URI
 import java.time.Duration
 
-var BASE_URL = "https://e8b9-136-232-57-110.ngrok-free.app"
+var BASE_URL = "https://412c-103-209-253-33.ngrok-free.app"
 
 var sseClient = SSEClient()
 
@@ -63,9 +63,15 @@ class AlertViewModel {
     }
 
     fun upsertAlertData(alerts: List<AlertObject>) {
+        val isFirstReqAfterInit = alertState.alerts.isEmpty()
         val updatedAlerts = alertState.alerts.toMutableList()
         for (alert in alerts) {
             if (updatedAlerts.none { it.id == alert.id }) {
+                if (!isFirstReqAfterInit) {
+                    println("Alert received: ${alert.title}")
+                    notification.value = Notification(alert.title, alert.message)
+                    isTherePendingAlert.value = true
+                }
                 updatedAlerts.add(alert)
             }
         }
@@ -304,18 +310,19 @@ class SSEClient {
     }
 
     fun initSse(sseHandler: SSEHandler) {
+        println("initSse")
         this.sseHandlers = sseHandler
         val eventHandler = sseHandlers?.let { DefaultEventHandler(it) }
-        val PATH = "/chat"
         try {
             eventSourceSse = EventSource.Builder(
-                eventHandler, URI.create("$BASE_URL$PATH")
+                eventHandler, URI.create("$BASE_URL/chat")
             )
                 .connectTimeout(Duration.ofSeconds(3))
                 .backoffResetThreshold(Duration.ofSeconds(3))
                 .build()
 
             eventSourceSse?.start()
+            println("SSE started")
         } catch (e: Exception) {
             e.printStackTrace()
         }
