@@ -1,7 +1,6 @@
 package com.example.crowdin
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.text.format.DateUtils
@@ -22,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -29,29 +29,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -280,9 +272,7 @@ fun HomeMain(it: PaddingValues, nav: NavController) {
         }
 
         InfoBox(
-            message1 = "We'll Let you know when\nCrowd levels change",
-            message2 =
-            "We'll alert you instantly when it starts to escalate"
+            message1 = "Crowd Sourced Alerts, Animals, Fires, Accidents, and more"
         )
 
         if (locationName.value == "Unknown") {
@@ -296,6 +286,9 @@ fun HomeMain(it: PaddingValues, nav: NavController) {
                 ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
                     LocalContext.current,
                     Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    LocalContext.current,
+                    Manifest.permission.POST_NOTIFICATIONS
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
                 RequestLocationPermission(
@@ -370,40 +363,56 @@ fun HomeMain(it: PaddingValues, nav: NavController) {
 
         InfoBox(message1 = "Nearby Alerts")
 
+        val alerts = sseClient.AlertViewModel.alertState.alerts.sortedBy { it.time }.reversed()
+        LazyColumn(
+            modifier = Modifier.height(300.dp)
+        ) {
+            items(alerts.size) { index ->
+                val alert = alerts[index]
+                AlertContainer(
+                    icon = R.drawable.emergency_heat_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                    title = alert.title,
+                    description = alert.message,
+                    distance = calculateDistance(
+                        latlng.value.first,
+                        latlng.value.second,
+                        alert.lat,
+                        alert.lon
+                    ).toLong(),
+                    time = alert.time
+                )
+            }
+        }
+
         // LazyColumn {
-        AlertContainer(
-            icon = R.drawable.emergency_heat_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-            title = "Wildfire Alert",
-            description = "A wildfire has been detected in the Forest of Gir",
-            distance = 100L,
-            time = System.currentTimeMillis(),
-        )
-
-        AlertContainer(
-            icon = R.drawable.sound_detection_dog_barking_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-            title = "Elephant Alert",
-            description = "A herd of elephants are moving towards the village",
-            distance = 100L,
-            time = System.currentTimeMillis(),
-        )
-
-        AlertContainer(
-            icon = R.drawable.emergency_heat_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-            title = "Wildfire Alert",
-            description = "A wildfire has been detected in the Forest of RondoZoa",
-            distance = 100L,
-            time = System.currentTimeMillis(),
-        )
+//        AlertContainer(
+//            icon = R.drawable.emergency_heat_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+//            title = "Wildfire Alert",
+//            description = "A wildfire has been detected in the Forest of Gir",
+//            distance = 100L,
+//            time = System.currentTimeMillis(),
+//        )
+//
+//        AlertContainer(
+//            icon = R.drawable.sound_detection_dog_barking_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+//            title = "Elephant Alert",
+//            description = "A herd of elephants are moving towards the village",
+//            distance = 100L,
+//            time = System.currentTimeMillis(),
+//        )
+//
+//        AlertContainer(
+//            icon = R.drawable.emergency_heat_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+//            title = "Wildfire Alert",
+//            description = "A wildfire has been detected in the Forest of RondoZoa",
+//            distance = 100L,
+//            time = System.currentTimeMillis(),
+//        )
     }
 }
 
-val nearByPeople = mutableIntStateOf(0)
-val nearByPeopleScanEnabled = mutableStateOf(false)
-
 @Composable
 fun NearbyPeople(nav: NavController) {
-    var sliderPosition by remember { mutableFloatStateOf(0f) }
-    val radiusFactor = 100f
     Row(
         horizontalArrangement = Arrangement.Center,
         modifier = Modifier
@@ -412,7 +421,14 @@ fun NearbyPeople(nav: NavController) {
         Column(
             modifier = Modifier
                 .padding(6.dp)
-                .background(Color(0xFFF3E5F5), shape = RoundedCornerShape(10.dp)),
+                .background(Color(0xFFF3E5F5), shape = RoundedCornerShape(10.dp))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {
+                        nav.navigate("Nearby")
+                    }
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -425,17 +441,17 @@ fun NearbyPeople(nav: NavController) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "People Nearby: ${nearByPeople.intValue}",
+                    text = "Nearby Finder",
                     color = Color(0xFF9575CD),
                     modifier = Modifier
-                        .padding(vertical = 1.dp, horizontal = 18.dp)
+                        .padding(vertical = 1.dp, horizontal = 24.dp)
                         .clip(shape = RoundedCornerShape(14.dp)),
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp
                 )
             }
             Text(
-                text = "Radius: ${radiusFactor * sliderPosition} km",
+                text = "Nearby People in Distress",
                 color = Color(0xFF9575CD),
                 fontWeight = FontWeight.Bold,
                 fontSize = 10.sp
@@ -444,54 +460,17 @@ fun NearbyPeople(nav: NavController) {
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .padding(horizontal = 6.dp),
+                    .padding(horizontal = 5.dp, vertical = 5.dp),
             ) {
-                Slider(
-                    value = sliderPosition,
-                    onValueChange = { sliderPosition = it },
-                    colors = SliderDefaults.colors(
-                        thumbColor = Color(0xFFFDD835),
-                        activeTrackColor = Color(0xFFF4511E),
-                        inactiveTrackColor = Color(0xFFF8BBD0)
-                    ),
-                    valueRange = 0f..0.25f,
-                    modifier = Modifier.width(150.dp)
+                Image(
+                    painter = painterResource(id = R.drawable.explore_nearby_24dp_e8eaed_fill0_wght400_grad0_opsz24),
+                    contentDescription = "Ambulance",
+                    modifier = Modifier
+                        .size(100.dp)
+                        .padding(6.dp)
+                        .padding(bottom = 12.dp),
+                    colorFilter = ColorFilter.tint(Color(0xFFEF5350))
                 )
-            }
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .padding(bottom = 2.dp)
-            ) {
-                Button(
-                    onClick = {
-                        if (!nearByPeopleScanEnabled.value) {
-                            nearByPeopleScanEnabled.value = true
-                            getNearbyUsers(
-                                userName.value,
-                                (radiusFactor * sliderPosition).toInt(),
-                                nearByPeople,
-                                nearByPeopleScanEnabled
-                            )
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (nearByPeopleScanEnabled.value) Color(0xFFE1BEE7) else Color(
-                            0xFF9575CD
-                        ),
-                        contentColor = Color.White
-                    ),
-                    modifier = Modifier.padding(6.dp),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(
-                        text = if (nearByPeopleScanEnabled.value) "Stop Scanning" else "Start Scanning",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
             }
         }
         Column(
@@ -502,7 +481,7 @@ fun NearbyPeople(nav: NavController) {
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = {
-                        nav?.navigate("Emergency")
+                        nav.navigate("Emergency")
                     }
                 ),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -753,7 +732,7 @@ fun WelcomeMessage(loggedInUser: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(horizontal = 12.dp)
             .background(
                 Color(0xFFF3E5F5),
                 shape = RoundedCornerShape(8.dp)

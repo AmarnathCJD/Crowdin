@@ -67,7 +67,7 @@ class AlertViewModel {
         val updatedAlerts = alertState.alerts.toMutableList()
         for (alert in alerts) {
             if (updatedAlerts.none { it.id == alert.id }) {
-                if (!isFirstReqAfterInit && alert.user != userName.value && alert.time > System.currentTimeMillis() - 10000) {
+                if (!isFirstReqAfterInit && alert.user != userName.value && alert.time > (System.currentTimeMillis() - 30000)) {
                     notification.value = Notification(alert.title, alert.message)
                     isTherePendingAlert.value = true
                 }

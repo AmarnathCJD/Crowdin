@@ -297,21 +297,21 @@ fun MapViewMain(paddingValues: PaddingValues, nav: NavController) {
 //                        anchor = Offset(0.5f, 1f),
                     )
                 }
-                for (road in roadData.roadClosed) {
-                    Marker(
-                        state = MarkerState(position = LatLng(road.lat, road.lon)),
-                        title = "Road Closed",
-                        snippet = "Road Closed",
-                        icon = getCustomBitmapDescriptor(
-                            LocalContext.current,
-                            R.drawable.remove_road_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-                            Color.Transparent,
-                            170,
-                            170,
-                        ),
-                        anchor = Offset(0.5f, 1f),
-                    )
-                }
+//                for (road in roadData.roadClosed) {
+//                    Marker(
+//                        state = MarkerState(position = LatLng(road.lat, road.lon)),
+//                        title = "Road Closed",
+//                        snippet = "Road Closed",
+//                        icon = getCustomBitmapDescriptor(
+//                            LocalContext.current,
+//                            R.drawable.remove_road_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+//                            Color.Transparent,
+//                            170,
+//                            170,
+//                        ),
+//                        anchor = Offset(0.5f, 1f),
+//                    )
+//                }
 
                 for (alert in sseClient.AlertViewModel.getAllAlerts()) {
                     Circle(

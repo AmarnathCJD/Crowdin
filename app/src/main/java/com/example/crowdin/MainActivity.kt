@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             Notify()
             val nav = rememberNavController()
-            NavHost(navController = nav, startDestination = "Alerts") {
+            NavHost(navController = nav, startDestination = "Home") {
                 composable(
                     "Home",
                 ) {
@@ -39,24 +39,16 @@ class MainActivity : ComponentActivity() {
                 ) { AccountMain(nav) }
                 composable(
                     "Location",
-                ) {
-                    MainLayout(nav)
-                }
+                ) { MainLayout(nav) }
                 composable(
                     "Emergency",
-                ) {
-                    EmergencyVehiclePage(nav)
-                }
+                ) { EmergencyVehiclePage(nav) }
                 composable(
                     "AddAlert",
-                ) {
-                    CreateAlertPage(nav)
-                }
+                ) { CreateAlertPage(nav) }
                 composable(
                     "ChatView",
-                ) {
-                    ChatPage(nav)
-                }
+                ) { ChatPage(nav) }
                 composable(
                     "Chats",
                 ) { OpenChatsList(nav) }
@@ -69,6 +61,9 @@ class MainActivity : ComponentActivity() {
                 composable(
                     "Alerts",
                 ) { AlertsPage(nav) }
+                composable(
+                    "Nearby",
+                ) { NearbyUsersMain(nav) }
             }
         }
 

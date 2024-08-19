@@ -438,7 +438,7 @@ fun AlertItemBasic(emergency: AlertObject) {
         val downCount = remember { mutableIntStateOf(emergency.downVotes) }
 
         Text(
-            text = "Probablity > ${calcProbability(upCount.intValue, downCount.intValue)}",
+            text = "Probability > ${calcProbability(upCount.intValue, downCount.intValue)}",
             color = Color(0xFF666869),
             fontSize = 12.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
