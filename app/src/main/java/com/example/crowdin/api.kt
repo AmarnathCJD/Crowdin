@@ -8,13 +8,9 @@ import androidx.compose.runtime.setValue
 import com.launchdarkly.eventsource.EventHandler
 import com.launchdarkly.eventsource.EventSource
 import com.launchdarkly.eventsource.MessageEvent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.internal.closeQuietly
 import org.json.JSONObject
 import java.net.URI
 import java.time.Duration
@@ -128,6 +124,72 @@ class AlertViewModel {
     }
 }
 
+data class Emergency(
+    val lat: Double,
+    val lon: Double,
+    val username: String,
+    val active: Boolean = true
+)
+
+class RecepModel {
+    fun upsertRecep(receps: List<Recep>) {
+        for (recep in receps) {
+            if (recep.lat == currentLocationOfAmbulance.value.latitude && recep.lon == currentLocationOfAmbulance.value.longitude) {
+                recepList.value += recep
+            }
+        }
+    }
+
+    fun sendRecep(lat: Double, lon: Double, crowded: Boolean) {
+        val client = OkHttpClient()
+        val request = okhttp3.Request.Builder()
+            .url("$BASE_URL/update_recep")
+            .post(
+                JSONObject(
+                    mapOf(
+                        "lat" to lat,
+                        "lon" to lon,
+                        "username" to userName.value,
+                        "crowded" to crowded
+                    )
+                ).toString()
+                    .toRequestBody("application/json".toMediaTypeOrNull())
+            )
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                Log.e(AppName, "Failed to send recep: ${e.message}")
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                if (!response.isSuccessful) {
+                    Log.e(AppName, "Failed to send recep: ${response.code}")
+                }
+            }
+        })
+    }
+}
+
+class EmergencyModel {
+    var emergenciesState by mutableStateOf(emptyList<Emergency>())
+
+    fun upsertEmergencies(emergencies: List<Emergency>) {
+        val ifIsFirstReqAfterInit = emergenciesState.isEmpty() && emergencies.size > 1
+        val updatedEmergencies = emergenciesState.toMutableList()
+        for (emergency in emergencies) {
+            if (updatedEmergencies.none { it.username == emergency.username }) {
+                if (emergency.username != userName.value && !ifIsFirstReqAfterInit && emergency.active) {
+                    notification.value = Notification("Ambulance Nearby", "There is an ambulance nearby, please make way", true)
+                    isTherePendingAlert.value = true
+                }
+                updatedEmergencies.add(emergency)
+            }
+        }
+        emergenciesState = updatedEmergencies
+    }
+}
+
 class ChatViewModel {
     private var chatState by mutableStateOf(ChatState())
 
@@ -226,6 +288,36 @@ class ChatViewModel {
             }
         })
     }
+
+    fun EmergencyClearanceReq(lat: Double, lon: Double, active: Boolean) {
+        val client = OkHttpClient()
+        val request = okhttp3.Request.Builder()
+            .url("$BASE_URL/emergency_clearance")
+            .post(
+                JSONObject(
+                    mapOf(
+                        "lat" to lat,
+                        "lng" to lon,
+                        "username" to userName.value,
+                        "active" to active
+                    )
+                ).toString()
+                    .toRequestBody("application/json".toMediaTypeOrNull())
+            )
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                Log.e(AppName, "Failed to send emergency clearance request: ${e.message}")
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                if (!response.isSuccessful) {
+                    Log.e(AppName, "Failed to send emergency clearance request: ${response.code}")
+                }
+            }
+        })
+    }
 }
 
 interface SSEHandler {
@@ -241,6 +333,8 @@ class SSEClient {
 
     var ChatViewModel = ChatViewModel()
     var AlertViewModel = AlertViewModel()
+    var EmergencyModel = EmergencyModel()
+    var RecepModel = RecepModel()
 
     var handler = object : SSEHandler {
         override fun onSSEConnectionOpened() {
@@ -299,6 +393,28 @@ class SSEClient {
                 )
             }
             AlertViewModel.upsertAlertData(alertsToInsert)
+            val emergencies = dataJson.getJSONArray("emergencies")
+            val emergenciesToInsert = mutableListOf<Emergency>()
+            for (i in 0 until emergencies.length()) {
+                val emergency = emergencies.getJSONObject(i)
+                emergenciesToInsert.add(
+                    Emergency(
+                        emergency.getDouble("lat"),
+                        emergency.getDouble("lng"),
+                        emergency.getString("username")
+                    )
+                )
+            }
+
+            EmergencyModel.upsertEmergencies(emergenciesToInsert)
+
+            val receps = dataJson.getJSONArray("receps")
+            sseClient.RecepModel.upsertRecep(
+                List(receps.length()) {
+                    val recep = receps.getJSONObject(it)
+                    Recep(recep.getDouble("lat"), recep.getDouble("lon"), recep.getBoolean("crowded"))
+                }
+            )
         }
 
         override fun onSSEError(t: Throwable) {

@@ -15,7 +15,7 @@ var CHANNEL_ID = "alerts"
 var CHANNEL_NAME = "Alert Notifications"
 var CHANNEL_DESCRIPTION = "High priority alerts, from NearBy"
 
-data class Notification(val title: String, val message: String)
+data class Notification(val title: String, val message: String, val em: Boolean = false)
 
 val notification = mutableStateOf<Notification?>(null)
 val isTherePendingAlert = mutableStateOf(false)
@@ -40,27 +40,53 @@ fun Notify() {
     intent2.action = Intent.ACTION_DELETE
 
     val pendingIntent1 = PendingIntent.getActivity(ctx, 5, intent2, PendingIntent.FLAG_IMMUTABLE)
-    val pendingIntent2 = PendingIntent.getActivity(ctx, 6, Intent(ctx, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+    val pendingIntent2 = PendingIntent.getActivity(
+        ctx,
+        6,
+        Intent(ctx, MainActivity::class.java),
+        PendingIntent.FLAG_IMMUTABLE
+    )
 
     when {
         isTherePendingAlert.value -> {
             isTherePendingAlert.value = false
-            val nBuilder = NotificationCompat.Builder(ctx, CHANNEL_ID)
-                .setContentTitle(
-                    notification.value?.title ?: "Alert"
-                )
-                .setContentText(
-                    notification.value?.message ?: "There is an alert (?)"
-                )
-                .setSmallIcon(R.drawable.tiger)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setLargeIcon(imgBitmap)
-                .setContentIntent(pendingIntent1)
-                .setAutoCancel(true)
-                .addAction(0, "SEE DETAILS", pendingIntent2)
-                .addAction(0, "DISMISS", pendingIntent1)
-                .build()
-            nManager.notify(1, nBuilder)
+            if (notification.value?.em == true) {
+                val intent = Intent(ctx, MainActivity::class.java)
+                val pendingIntentNotif =
+                    PendingIntent.getActivity(ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+                val nBuilder = NotificationCompat.Builder(ctx, CHANNEL_ID)
+                    .setContentTitle(
+                        notification.value?.title ?: "Alert"
+                    )
+                    .setContentText(
+                        notification.value?.message ?: "There is an alert (?)"
+                    )
+                    .setSmallIcon(R.drawable.emergency_share_24dp_e8eaed_fill0_wght400_grad0_opsz24)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setLargeIcon(imgBitmap)
+                    .setContentIntent(pendingIntentNotif)
+                    .setAutoCancel(true)
+                    .addAction(0, "SEE DETAILS", pendingIntentNotif)
+                    .build()
+                nManager.notify(1, nBuilder)
+            } else {
+                val nBuilder = NotificationCompat.Builder(ctx, CHANNEL_ID)
+                    .setContentTitle(
+                        notification.value?.title ?: "Alert"
+                    )
+                    .setContentText(
+                        notification.value?.message ?: "There is an alert (?)"
+                    )
+                    .setSmallIcon(R.drawable.tiger)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setLargeIcon(imgBitmap)
+                    .setContentIntent(pendingIntent1)
+                    .setAutoCancel(true)
+                    .addAction(0, "SEE DETAILS", pendingIntent2)
+                    .addAction(0, "DISMISS", pendingIntent1)
+                    .build()
+                nManager.notify(1, nBuilder)
+            }
         }
     }
 }

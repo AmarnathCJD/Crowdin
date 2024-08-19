@@ -90,11 +90,15 @@ fun resolveCoordinates(latitude: Double, longitude: Double): String {
         .url("https://nominatim.openstreetmap.org/reverse.php?lat=$latitude&lon=$longitude&zoom=18&format=jsonv2")
         .build()
 
-    val response = client.newCall(request).execute()
-    val responseBody = response.body?.string()
+    try {
+        val response = client.newCall(request).execute()
+        val responseBody = response.body?.string()
 
-    val json = responseBody?.let { JSONObject(it) }
-    return json?.getString("display_name") ?: "Unknown"
+        val json = responseBody?.let { JSONObject(it) }
+        return json?.getString("display_name") ?: "Unknown"
+    } catch (e: Exception) {
+        return "Unknown"
+    }
 }
 
 fun cellTowerLookup(cellId: Int, lac: Int, mcc: Int, mnc: Int): String {

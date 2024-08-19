@@ -302,7 +302,6 @@ fun HomeMain(it: PaddingValues, nav: NavController) {
                     onPermissionDenied = {},
                     onPermissionsRevoked = {}
                 )
-                return
             }
 
             client.getCurrentLocation(accuracy, CancellationTokenSource().token)
@@ -320,7 +319,7 @@ fun HomeMain(it: PaddingValues, nav: NavController) {
                     locationName.value = "- Unknown -"
                 }
         }
-        NearbyPeople()
+        NearbyPeople(nav)
 
         Column(
             modifier = Modifier
@@ -401,7 +400,7 @@ val nearByPeople = mutableIntStateOf(0)
 val nearByPeopleScanEnabled = mutableStateOf(false)
 
 @Composable
-fun NearbyPeople() {
+fun NearbyPeople(nav: NavController) {
     var sliderPosition by remember { mutableFloatStateOf(0f) }
     val radiusFactor = 100f
     Row(
@@ -497,7 +496,14 @@ fun NearbyPeople() {
         Column(
             modifier = Modifier
                 .padding(6.dp)
-                .background(Color(0xFFF3E5F5), shape = RoundedCornerShape(10.dp)),
+                .background(Color(0xFFF3E5F5), shape = RoundedCornerShape(10.dp))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {
+                        nav?.navigate("Emergency")
+                    }
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {

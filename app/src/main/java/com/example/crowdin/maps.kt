@@ -294,12 +294,6 @@ fun MapViewMain(paddingValues: PaddingValues, nav: NavController) {
                 mapColorScheme = ComposeMapColorScheme.LIGHT,
                 mergeDescendants = true
             ) {
-                Marker(
-                    state = MarkerState(position = points[0]),
-                    title = "Kerala",
-                    snippet = "God's own countryMMMM",
-                )
-
                 Polyline(
                     points = points,
                     color = Color.Red,
