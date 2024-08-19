@@ -938,7 +938,7 @@ fun PlaySOS() {
         if (SOSSoundActive.value) {
             scope.launch(Dispatchers.IO) {
                 try {
-                    val fileDescriptor = context.resources.openRawResourceFd(R.raw.humba)
+                    val fileDescriptor = context.resources.openRawResourceFd(R.raw.alert_sound)
                     mediaPlayer.setDataSource(
                         fileDescriptor.fileDescriptor,
                         fileDescriptor.startOffset,

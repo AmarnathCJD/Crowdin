@@ -15,7 +15,7 @@ var CHANNEL_ID = "alerts"
 var CHANNEL_NAME = "Alert Notifications"
 var CHANNEL_DESCRIPTION = "High priority alerts, from NearBy"
 
-data class Notification(val title: String, val message: String, val em: Boolean = false)
+data class Notification(val title: String, val message: String, var em: Boolean = false)
 
 val notification = mutableStateOf<Notification?>(null)
 val isTherePendingAlert = mutableStateOf(false)
@@ -69,6 +69,7 @@ fun Notify() {
                     .addAction(0, "SEE DETAILS", pendingIntentNotif)
                     .build()
                 nManager.notify(1, nBuilder)
+                notification.value!!.em = false
             } else {
                 val nBuilder = NotificationCompat.Builder(ctx, CHANNEL_ID)
                     .setContentTitle(

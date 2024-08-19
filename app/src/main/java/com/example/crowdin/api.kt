@@ -5,6 +5,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.google.android.gms.maps.model.LatLng
 import com.launchdarkly.eventsource.EventHandler
 import com.launchdarkly.eventsource.EventSource
 import com.launchdarkly.eventsource.MessageEvent
@@ -15,7 +16,7 @@ import org.json.JSONObject
 import java.net.URI
 import java.time.Duration
 
-var BASE_URL = "https://412c-103-209-253-33.ngrok-free.app"
+var BASE_URL = "https://3fc8ee11474726bc33447804115cb41f.serveo.net"
 
 var sseClient = SSEClient()
 
@@ -36,7 +37,10 @@ data class AlertObject(
     val severity: String,
     val user: String,
     val id: Int,
-    val icon: String
+    val icon: String,
+    var upVotes: Int = 0,
+    var downVotes: Int = 0,
+    var probability: Double = 0.0
 )
 
 data class ChatState(
@@ -63,7 +67,7 @@ class AlertViewModel {
         val updatedAlerts = alertState.alerts.toMutableList()
         for (alert in alerts) {
             if (updatedAlerts.none { it.id == alert.id }) {
-                if (!isFirstReqAfterInit && alert.user != userName.value) {
+                if (!isFirstReqAfterInit && alert.user != userName.value && alert.time > System.currentTimeMillis() - 10000) {
                     notification.value = Notification(alert.title, alert.message)
                     isTherePendingAlert.value = true
                 }
@@ -72,6 +76,65 @@ class AlertViewModel {
         }
 
         alertState = alertState.copy(alerts = updatedAlerts)
+    }
+
+    fun getRoadData(lat: Double, lon: Double) {
+        val client = OkHttpClient()
+        val request = okhttp3.Request.Builder()
+            .url("$BASE_URL/ways_data?lat=$lon&lon=$lat")
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                Log.e(AppName, "Failed to get road data: ${e.message}")
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                if (!response.isSuccessful) {
+                    Log.e(AppName, "Failed to get road data: ${response.code}")
+                } else {
+                    try {
+                        val json = response.body?.string()?.let { JSONObject(it) }
+                        val items = json?.getJSONArray("details")
+                        if (items != null) {
+                            for (i in 0 until items.length()) {
+                                val item = items.getJSONObject(i)
+                                if (item.getString("type") == "ROAD_CLOSED") {
+                                    roadData.roadClosed.add(
+                                        RoadClosedData(
+                                            item.getDouble("lat"),
+                                            item.getDouble("lon"),
+                                        )
+                                    )
+                                } else if (item.getString("type") == "JAM") {
+                                    val lines = item.getJSONArray("line")
+                                    val points = mutableListOf<LatLng>()
+                                    for (j in 0 until lines.length()) {
+                                        val line = lines.getJSONObject(j)
+                                        points.add(
+                                            LatLng(
+                                                line.getDouble("lat"),
+                                                line.getDouble("lon")
+                                            )
+                                        )
+                                    }
+                                    roadData.roadBlocked.add(
+                                        RoadBlockedData(
+                                            points,
+                                            item.getString("street"),
+                                            item.getInt("speed")
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e(AppName, "Failed to parse road data: ${e.message}")
+                        return
+                    }
+                }
+            }
+        })
     }
 
     fun sendAlert(
@@ -122,25 +185,94 @@ class AlertViewModel {
             }
         })
     }
+
+    fun upvoteAlert(alertId: Int, dec: Boolean = false) {
+        alertState.alerts.find { it.id == alertId }?.upVotes =
+            alertState.alerts.find { it.id == alertId }?.upVotes?.plus(1) ?: 0
+        val client = OkHttpClient()
+        val request = okhttp3.Request.Builder()
+            .url("$BASE_URL/upvote_alert")
+            .post(
+                JSONObject(
+                    mapOf(
+                        "alert_id" to alertId,
+                        "dec" to dec
+                    )
+                ).toString()
+                    .toRequestBody("application/json".toMediaTypeOrNull())
+            )
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                Log.e(AppName, "Failed to upvote alert: ${e.message}")
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                if (!response.isSuccessful) {
+                    Log.e(AppName, "Failed to upvote alert: ${response.code}")
+                }
+            }
+        })
+    }
+
+    fun downvoteAlert(alertId: Int, dec: Boolean = false) {
+        alertState.alerts.find { it.id == alertId }?.downVotes =
+            alertState.alerts.find { it.id == alertId }?.downVotes?.plus(1) ?: 0
+        val client = OkHttpClient()
+        val request = okhttp3.Request.Builder()
+            .url("$BASE_URL/downvote_alert")
+            .post(
+                JSONObject(
+                    mapOf(
+                        "alert_id" to alertId,
+                        "dec" to dec
+                    )
+                ).toString()
+                    .toRequestBody("application/json".toMediaTypeOrNull())
+            )
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                Log.e(AppName, "Failed to downvote alert: ${e.message}")
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                if (!response.isSuccessful) {
+                    Log.e(AppName, "Failed to downvote alert: ${response.code}")
+                }
+            }
+        })
+    }
 }
 
 data class Emergency(
     val lat: Double,
     val lon: Double,
     val username: String,
-    val active: Boolean = true
+    val active: Boolean = true,
+    val emergencyId: String
 )
 
 class RecepModel {
+    var recepsState by mutableStateOf(emptyList<Recep>())
     fun upsertRecep(receps: List<Recep>) {
+        val updatedReceps = recepsState.toMutableList()
         for (recep in receps) {
-            if (recep.lat == currentLocationOfAmbulance.value.latitude && recep.lon == currentLocationOfAmbulance.value.longitude) {
-                recepList.value += recep
+            if (updatedReceps.none { it.lat == recep.lat && it.lon == recep.lon }) {
+                updatedReceps.add(recep)
+            } else {
+                val index =
+                    updatedReceps.indexOfFirst { it.lat == recep.lat && it.lon == recep.lon }
+                updatedReceps[index] = recep
             }
         }
+
+        recepsState = updatedReceps
     }
 
-    fun sendRecep(lat: Double, lon: Double, crowded: Boolean) {
+    fun sendRecep(lat: Double, lon: Double, crowded: Boolean, emergencyId: String) {
         val client = OkHttpClient()
         val request = okhttp3.Request.Builder()
             .url("$BASE_URL/update_recep")
@@ -150,7 +282,8 @@ class RecepModel {
                         "lat" to lat,
                         "lon" to lon,
                         "username" to userName.value,
-                        "crowded" to crowded
+                        "crowded" to crowded,
+                        "emergency_id" to emergencyId
                     )
                 ).toString()
                     .toRequestBody("application/json".toMediaTypeOrNull())
@@ -178,9 +311,13 @@ class EmergencyModel {
         val ifIsFirstReqAfterInit = emergenciesState.isEmpty() && emergencies.size > 1
         val updatedEmergencies = emergenciesState.toMutableList()
         for (emergency in emergencies) {
-            if (updatedEmergencies.none { it.username == emergency.username }) {
+            if (updatedEmergencies.none { it.username == emergency.username && it.active }) {
                 if (emergency.username != userName.value && !ifIsFirstReqAfterInit && emergency.active) {
-                    notification.value = Notification("Ambulance Nearby", "There is an ambulance nearby, please make way", true)
+                    notification.value = Notification(
+                        "Ambulance Nearby",
+                        "There is an ambulance nearby, please make way",
+                        true
+                    )
                     isTherePendingAlert.value = true
                 }
                 updatedEmergencies.add(emergency)
@@ -246,7 +383,11 @@ class ChatViewModel {
                         if (chats != null) {
                             for (i in 0 until chats.length()) {
                                 val chat = chats.getJSONObject(i)
-                                mut.value += Chat(chat.getInt("id"), chat.getString("title"), chat.getString("message"))
+                                mut.value += Chat(
+                                    chat.getInt("id"),
+                                    chat.getString("title"),
+                                    chat.getString("message")
+                                )
                             }
                         }
                     }
@@ -284,6 +425,33 @@ class ChatViewModel {
             override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
                 if (!response.isSuccessful) {
                     Log.e(AppName, "Failed to send message: ${response.code}")
+                }
+            }
+        })
+    }
+
+    fun delEmergency(username: String) {
+        val client = OkHttpClient()
+        val request = okhttp3.Request.Builder()
+            .url("$BASE_URL/delete_emergency")
+            .post(
+                JSONObject(
+                    mapOf(
+                        "username" to username
+                    )
+                ).toString()
+                    .toRequestBody("application/json".toMediaTypeOrNull())
+            )
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                Log.e(AppName, "Failed to delete emergency: ${e.message}")
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                if (!response.isSuccessful) {
+                    Log.e(AppName, "Failed to delete emergency: ${response.code}")
                 }
             }
         })
@@ -377,21 +545,36 @@ class SSEClient {
                     icn = alert.getString("icon")
                 }
 
+                val alertObj = AlertObject(
+                    alert.getDouble("lat"),
+                    alert.getDouble("lon"),
+                    alert.getInt("radius"),
+                    alert.getString("message"),
+                    alert.getString("title"),
+                    alert.getLong("time"),
+                    alert.getString("severity"),
+                    alert.getString("username"),
+                    alert.getInt("id"),
+                    icn
+                )
+
+                if (alert.has("upvotes")) {
+                    alertObj.upVotes = alert.getInt("upvotes")
+                }
+
+                if (alert.has("downvotes")) {
+                    alertObj.downVotes = alert.getInt("downvotes")
+                }
+
+                if (alert.has("probability")) {
+                    alertObj.probability = alert.getDouble("probability")
+                }
+
                 alertsToInsert.add(
-                    AlertObject(
-                        alert.getDouble("lat"),
-                        alert.getDouble("lon"),
-                        alert.getInt("radius"),
-                        alert.getString("message"),
-                        alert.getString("title"),
-                        alert.getLong("time"),
-                        alert.getString("severity"),
-                        alert.getString("username"),
-                        alert.getInt("id"),
-                        icn
-                    )
+                    alertObj
                 )
             }
+
             AlertViewModel.upsertAlertData(alertsToInsert)
             val emergencies = dataJson.getJSONArray("emergencies")
             val emergenciesToInsert = mutableListOf<Emergency>()
@@ -401,7 +584,9 @@ class SSEClient {
                     Emergency(
                         emergency.getDouble("lat"),
                         emergency.getDouble("lng"),
-                        emergency.getString("username")
+                        emergency.getString("username"),
+                        emergency.getBoolean("active"),
+                        emergency.getString("emergency_id"),
                     )
                 )
             }
@@ -409,12 +594,20 @@ class SSEClient {
             EmergencyModel.upsertEmergencies(emergenciesToInsert)
 
             val receps = dataJson.getJSONArray("receps")
-            sseClient.RecepModel.upsertRecep(
-                List(receps.length()) {
-                    val recep = receps.getJSONObject(it)
-                    Recep(recep.getDouble("lat"), recep.getDouble("lon"), recep.getBoolean("crowded"))
-                }
-            )
+            val recepsToInsert = mutableListOf<Recep>()
+            for (i in 0 until receps.length()) {
+                val recep = receps.getJSONObject(i)
+                recepsToInsert.add(
+                    Recep(
+                        recep.getDouble("lat"),
+                        recep.getDouble("lng"),
+                        recep.getBoolean("crowded"),
+                        recep.getString("emergency_id")
+                    )
+                )
+            }
+
+            RecepModel.upsertRecep(recepsToInsert)
         }
 
         override fun onSSEError(t: Throwable) {
@@ -492,7 +685,12 @@ fun updateUserLocation(username: String, lat: Double, lon: Double) {
     })
 }
 
-fun getNearbyUsers(username: String, radius: Int, nearbyUsersCount: MutableState<Int>, scanning: MutableState<Boolean>) {
+fun getNearbyUsers(
+    username: String,
+    radius: Int,
+    nearbyUsersCount: MutableState<Int>,
+    scanning: MutableState<Boolean>
+) {
     val client = OkHttpClient()
     val request = okhttp3.Request.Builder()
         .url("$BASE_URL/count_nearby_peoples")

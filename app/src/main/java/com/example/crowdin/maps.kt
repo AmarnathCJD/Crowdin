@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -33,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +54,6 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.JointType
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.ComposeMapColorScheme
@@ -68,6 +65,27 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+
+data class RoadClosedData(
+    val lat: Double,
+    val lon: Double,
+)
+
+data class RoadBlockedData(
+    val line: List<LatLng>,
+    val streetName: String,
+    val speed: Int,
+)
+
+data class RoadData(
+    val roadClosed: MutableList<RoadClosedData>,
+    val roadBlocked: MutableList<RoadBlockedData>,
+)
+
+val roadData = RoadData(
+    roadClosed = mutableListOf(),
+    roadBlocked = mutableListOf(),
+)
 
 @Composable
 fun MainLayout(nav: NavController) {
@@ -177,44 +195,6 @@ fun MainLayout(nav: NavController) {
     }
 }
 
-val points = ArrayList<LatLng>(
-    listOf(
-        LatLng(10.953551, 75.946148),
-        LatLng(10.953622, 75.945468),
-        LatLng(10.953619, 75.944995),
-        LatLng(10.953596, 75.944636),
-        LatLng(10.953444, 75.94428),
-        LatLng(10.953208, 75.944022),
-        LatLng(10.953081, 75.94392),
-        LatLng(10.952738, 75.943747),
-        LatLng(10.951761, 75.943305),
-        LatLng(10.951454, 75.943186),
-        LatLng(10.951121, 75.943008),
-        LatLng(10.950609, 75.942696),
-        LatLng(10.949821, 75.942061),
-        LatLng(10.949414, 75.941824),
-        LatLng(10.949259, 75.941761),
-        LatLng(10.949101, 75.941697),
-        LatLng(10.948488, 75.941659),
-        LatLng(10.946162, 75.941515),
-        LatLng(10.945985, 75.941493),
-        LatLng(10.94585, 75.941444),
-        LatLng(10.945781, 75.941408),
-        LatLng(10.945584, 75.941271),
-        LatLng(10.945402, 75.941093),
-        LatLng(10.944577, 75.940135),
-        LatLng(10.943799, 75.939153),
-        LatLng(10.943211, 75.938587),
-        LatLng(10.942999, 75.938399),
-        LatLng(10.942917, 75.938333),
-        LatLng(10.942468, 75.938034),
-        LatLng(10.942239, 75.937923),
-        LatLng(10.941885, 75.937795),
-        LatLng(10.941658, 75.937729),
-        LatLng(10.941385, 75.937673)
-    )
-)
-
 val currentLocation = mutableStateOf(LatLng(10.953551, 75.946148))
 
 @SuppressLint("UnrememberedMutableState")
@@ -250,6 +230,7 @@ fun MapViewMain(paddingValues: PaddingValues, nav: NavController) {
                         11f
                     )
                     currentLocation.value = LatLng(it.latitude, it.longitude)
+                    sseClient.AlertViewModel.getRoadData(it.latitude, it.longitude)
                 }
             }
             .addOnFailureListener {
@@ -294,12 +275,43 @@ fun MapViewMain(paddingValues: PaddingValues, nav: NavController) {
                 mapColorScheme = ComposeMapColorScheme.LIGHT,
                 mergeDescendants = true
             ) {
-                Polyline(
-                    points = points,
-                    color = Color.Red,
-                    width = 20f,
-                    jointType = JointType.BEVEL
-                )
+                for (road in roadData.roadBlocked) {
+                    Polyline(
+                        points = road.line,
+                        color = Color.Red,
+                        width = 20f,
+                        jointType = JointType.BEVEL
+                    )
+
+                    Marker(
+                        state = MarkerState(position = road.line[0]),
+                        title = road.streetName,
+                        snippet = "Speed: ${road.speed} km/h",
+//                        icon = getCustomBitmapDescriptor(
+//                            LocalContext.current,
+//                            R.drawable.arrow_cool_down_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+//                            Color.Red,
+//                            170,
+//                            170,
+//                        ),
+//                        anchor = Offset(0.5f, 1f),
+                    )
+                }
+                for (road in roadData.roadClosed) {
+                    Marker(
+                        state = MarkerState(position = LatLng(road.lat, road.lon)),
+                        title = "Road Closed",
+                        snippet = "Road Closed",
+                        icon = getCustomBitmapDescriptor(
+                            LocalContext.current,
+                            R.drawable.remove_road_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            Color.Transparent,
+                            170,
+                            170,
+                        ),
+                        anchor = Offset(0.5f, 1f),
+                    )
+                }
 
                 for (alert in sseClient.AlertViewModel.getAllAlerts()) {
                     Circle(
@@ -387,12 +399,12 @@ val popupState = mutableStateOf(false)
 fun InfoPopupBoxWithZIndex(nav: NavController) {
     val distance = remember { mutableDoubleStateOf(0.0) }
     if (popupState.value) {
-            distance.doubleValue = calculateDistance(
-                currentLocation.value.latitude,
-                currentLocation.value.longitude,
-                PopupDataObj.value.location.latitude,
-                PopupDataObj.value.location.longitude
-            )
+        distance.doubleValue = calculateDistance(
+            currentLocation.value.latitude,
+            currentLocation.value.longitude,
+            PopupDataObj.value.location.latitude,
+            PopupDataObj.value.location.longitude
+        )
 
         Box(
             modifier = Modifier
@@ -426,7 +438,9 @@ fun InfoPopupBoxWithZIndex(nav: NavController) {
                         Box(
                             modifier = Modifier
                                 .background(
-                                    if (distance.doubleValue < PopupDataObj.value.radius) Color(0xFFE57373) else Color(
+                                    if (distance.doubleValue < PopupDataObj.value.radius) Color(
+                                        0xFFE57373
+                                    ) else Color(
                                         0xFF9CCC65
                                     ),
                                     shape = RoundedCornerShape(20.dp)

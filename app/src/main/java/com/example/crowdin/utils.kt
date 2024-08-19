@@ -22,6 +22,7 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -82,6 +83,29 @@ fun RequestLocationPermission(
             }
         }
     }
+}
+
+fun resolveCoordinatesAsync(latitude: Double, longitude: Double, locName: MutableState<String>) {
+    val client = OkHttpClient()
+    val request = Request.Builder()
+        .url("https://nominatim.openstreetmap.org/reverse.php?lat=$latitude&lon=$longitude&zoom=18&format=jsonv2")
+        .build()
+
+    client.newCall(request).enqueue(object : okhttp3.Callback {
+        override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+            locName.value = "Location"
+        }
+
+        override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+            try {
+                val responseBody = response.body?.string()
+                val json = responseBody?.let { JSONObject(it) }
+                locName.value = json?.getString("display_name") ?: "Location"
+            } catch (e: Exception) {
+                locName.value = "Location"
+            }
+        }
+    })
 }
 
 fun resolveCoordinates(latitude: Double, longitude: Double): String {
@@ -321,6 +345,13 @@ fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): D
 
 fun deg2rad(deg: Double): Double {
     return deg * (Math.PI / 180)
+}
+
+fun calcProbability(upvotes: Int, downvotes: Int): Int {
+    if (upvotes == 0 && downvotes == 0) {
+        return 50
+    }
+    return (upvotes * 100) / (upvotes + downvotes)
 }
 
 var AlertIconMap = mapOf(

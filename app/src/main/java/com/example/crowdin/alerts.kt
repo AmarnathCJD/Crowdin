@@ -27,6 +27,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -54,6 +58,9 @@ fun AlertsPage(nav: NavController) {
         ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
             LocalContext.current,
             Manifest.permission.ACCESS_COARSE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+            LocalContext.current,
+            Manifest.permission.POST_NOTIFICATIONS
         ) != PackageManager.PERMISSION_GRANTED
     ) {
         RequestLocationPermission(
@@ -177,15 +184,15 @@ fun AlertsTitle() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(18.dp)
-            .background(Color(0xFFFFCDD2), RoundedCornerShape(10.dp)),
+            .padding(horizontal = 22.dp, vertical = 16.dp)
+            .background(Color(0xFFFFCDD2), RoundedCornerShape(6.dp)),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "All On-Going Alerts",
-            color = Color.Black,
-            fontSize = 20.sp,
+            text = "Active Alerts (NearBy)",
+            color = Color(0xFF3F51B5),
+            fontSize = 18.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
             modifier = Modifier.padding(12.dp)
         )
@@ -225,8 +232,9 @@ fun AlertItem(emergency: Emergency) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
-            .background(Color(0xFFF3E5F5), RoundedCornerShape(20.dp))
+            .padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 6.dp)
+            .background(Color(0x6AFCE4EC), RoundedCornerShape(12.dp))
+            .border(2.dp, Color(0xFFE1BEE7), RoundedCornerShape(12.dp))
     ) {
         Text(
             text = "Emergency Vehicle Alert",
@@ -263,7 +271,8 @@ fun AlertItem(emergency: Emergency) {
                 .padding(4.dp)
                 .padding(top = 16.dp, start = 16.dp, end = 16.dp)
                 .clip(RoundedCornerShape(15.dp))
-                .height(200.dp),
+                .height(220.dp)
+                .border(2.dp, Color(0xFFE1BEE7), RoundedCornerShape(15.dp)),
             properties = MapProperties(
                 isMyLocationEnabled = true,
                 isTrafficEnabled = true,
@@ -293,7 +302,14 @@ fun AlertItem(emergency: Emergency) {
             horizontalArrangement = Arrangement.End
         ) {
             Button(
-                onClick = { sseClient.RecepModel.sendRecep(emergency.lat, emergency.lon, false) },
+                onClick = {
+                    sseClient.RecepModel.sendRecep(
+                        emergency.lat,
+                        emergency.lon,
+                        false,
+                        emergency.emergencyId
+                    )
+                },
                 modifier = Modifier
                     .padding(12.dp),
                 shape = RoundedCornerShape(13.dp),
@@ -308,7 +324,14 @@ fun AlertItem(emergency: Emergency) {
                 Text("Clear")
             }
             Button(
-                onClick = { sseClient.RecepModel.sendRecep(emergency.lat, emergency.lon, true) },
+                onClick = {
+                    sseClient.RecepModel.sendRecep(
+                        emergency.lat,
+                        emergency.lon,
+                        true,
+                        emergency.emergencyId
+                    )
+                },
                 modifier = Modifier
                     .padding(12.dp),
                 shape = RoundedCornerShape(13.dp),
@@ -332,8 +355,9 @@ fun AlertItemBasic(emergency: AlertObject) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
-            .background(Color(0xFFF3E5F5), RoundedCornerShape(20.dp))
+            .padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 6.dp)
+            .background(Color(0x6AFCE4EC), RoundedCornerShape(12.dp))
+            .border(2.dp, Color(0xFFE1BEE7), RoundedCornerShape(12.dp))
     ) {
         Text(
             text = emergency.title,
@@ -352,10 +376,25 @@ fun AlertItemBasic(emergency: AlertObject) {
             fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 24.dp)
         )
+        val locationName = remember { mutableStateOf("Location") }
+        LaunchedEffect (Unit) {
+            resolveCoordinatesAsync(emergency.lat, emergency.lon, locationName)
+        }
+        if (locationName.value != "Location") {
+            Text(
+                text = locationName.value,
+                color = Color(0xFF666869),
+                fontSize = 14.sp,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 6.dp)
+            )
+        }
         Text(
             text = "(LAT ${emergency.lat}, LON ${emergency.lon})",
             color = Color(0xFFF4511E),
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
             modifier = Modifier
                 .padding(horizontal = 24.dp)
@@ -370,7 +409,8 @@ fun AlertItemBasic(emergency: AlertObject) {
                 .padding(4.dp)
                 .padding(top = 16.dp, start = 16.dp, end = 16.dp)
                 .clip(RoundedCornerShape(15.dp))
-                .height(200.dp),
+                .height(220.dp)
+                .border(2.dp, Color(0xFFE1BEE7), RoundedCornerShape(15.dp)),
             properties = MapProperties(
                 isMyLocationEnabled = true,
                 isTrafficEnabled = true,
@@ -382,7 +422,23 @@ fun AlertItemBasic(emergency: AlertObject) {
             )
         }
         Text(
-            text = "Radius of the alert: ${emergency.radius} meters",
+            text = "Radius of the Alert: ${emergency.radius} KM",
+            color = Color(0xFF666869),
+            fontSize = 14.sp,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+            modifier = Modifier
+                .padding(0.dp)
+                .padding(horizontal = 24.dp)
+                .padding(top = 6.dp)
+        )
+
+        val isUpvotedAlready = remember { mutableStateOf(false) }
+        val isDownvotedAlready = remember { mutableStateOf(false) }
+        val upCount = remember { mutableIntStateOf(emergency.upVotes) }
+        val downCount = remember { mutableIntStateOf(emergency.downVotes) }
+
+        Text(
+            text = "Probablity > ${calcProbability(upCount.intValue, downCount.intValue)}",
             color = Color(0xFF666869),
             fontSize = 12.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
@@ -399,7 +455,24 @@ fun AlertItemBasic(emergency: AlertObject) {
             horizontalArrangement = Arrangement.End
         ) {
             Button(
-                onClick = { /*TODO*/ },
+                onClick = {
+                    if (isDownvotedAlready.value) {
+                        isDownvotedAlready.value = false
+                        isUpvotedAlready.value = true
+                        downCount.intValue -= 1
+                        upCount.intValue += 1
+                        sseClient.AlertViewModel.downvoteAlert(emergency.id, true)
+                        sseClient.AlertViewModel.upvoteAlert(emergency.id)
+                    } else if (!isUpvotedAlready.value) {
+                        isUpvotedAlready.value = true
+                        upCount.intValue += 1
+                        sseClient.AlertViewModel.upvoteAlert(emergency.id)
+                    } else {
+                        isUpvotedAlready.value = false
+                        sseClient.AlertViewModel.upvoteAlert(emergency.id, true)
+                        upCount.intValue -= 1
+                    }
+                },
                 modifier = Modifier
                     .padding(12.dp),
                 shape = RoundedCornerShape(13.dp),
@@ -411,10 +484,27 @@ fun AlertItemBasic(emergency: AlertObject) {
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.size(4.dp))
-                Text("Upvote")
+                Text(if (upCount.intValue > 0) upCount.intValue.toString() + " Upvotes" else "Upvote")
             }
             Button(
-                onClick = { /*TODO*/ },
+                onClick = {
+                    if (isUpvotedAlready.value) {
+                        isUpvotedAlready.value = false
+                        isDownvotedAlready.value = true
+                        upCount.intValue -= 1
+                        downCount.intValue += 1
+                        sseClient.AlertViewModel.upvoteAlert(emergency.id, true)
+                        sseClient.AlertViewModel.downvoteAlert(emergency.id)
+                    } else if (!isDownvotedAlready.value) {
+                        isDownvotedAlready.value = true
+                        sseClient.AlertViewModel.downvoteAlert(emergency.id)
+                        downCount.intValue += 1
+                    } else {
+                        isDownvotedAlready.value = false
+                        sseClient.AlertViewModel.downvoteAlert(emergency.id, true)
+                        downCount.intValue -= 1
+                    }
+                },
                 modifier = Modifier
                     .padding(12.dp),
                 shape = RoundedCornerShape(13.dp),
@@ -426,7 +516,7 @@ fun AlertItemBasic(emergency: AlertObject) {
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.size(4.dp))
-                Text("Downvote")
+                Text(if (downCount.intValue > 0) downCount.intValue.toString() + " Downvotes" else "Downvote")
             }
         }
     }

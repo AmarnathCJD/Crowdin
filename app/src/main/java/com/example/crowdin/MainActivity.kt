@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             Notify()
             val nav = rememberNavController()
-            NavHost(navController = nav, startDestination = "Home") {
+            NavHost(navController = nav, startDestination = "Alerts") {
                 composable(
                     "Home",
                 ) {

@@ -6,9 +6,11 @@ import android.content.pm.PackageManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,11 +55,8 @@ import kotlinx.coroutines.delay
 data class Recep(
     val lat: Double,
     val lon: Double,
-    val crowded: Boolean
-)
-
-val recepList = mutableStateOf(
-    listOf(Recep(0.0, 0.0, false))
+    val crowded: Boolean,
+    val emergencyId: String = ""
 )
 
 @Composable
@@ -167,8 +166,8 @@ fun AmbulanceEmerge(padding: PaddingValues) {
         modifier = Modifier
             .fillMaxSize()
             .padding(
-                top = padding.calculateTopPadding() - 30.dp,
-                bottom = padding.calculateBottomPadding()
+                top = padding.calculateTopPadding() - 80.dp,
+                bottom = padding.calculateBottomPadding() - 70.dp
             )
     ) {
         val cameraPositionState = rememberCameraPositionState {
@@ -237,7 +236,7 @@ fun AmbulanceEmerge(padding: PaddingValues) {
                         Text(
                             text = "EMERGENCY SERVICES",
                             color = Color(0xFFEF5350),
-                            fontSize = 20.sp,
+                            fontSize = 18.sp,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
@@ -267,12 +266,12 @@ fun AmbulanceEmerge(padding: PaddingValues) {
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(120.dp)
+                            .height(90.dp)
                     ) {
                         Text(
-                            text = "ENABLE EMERGENCY VECHILE CLERANCE",
+                            text = "ENABLE EMERGENCY VECHILE CLEARANCE",
                             color = Color.White,
-                            fontSize = 20.sp,
+                            fontSize = 17.sp,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                             modifier = Modifier
                                 .align(Alignment.CenterVertically)
@@ -283,19 +282,38 @@ fun AmbulanceEmerge(padding: PaddingValues) {
                         )
                     }
                 }
+                Box (
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 2.dp)
+                        .background(Color(0xFFE8F5E9), shape = RoundedCornerShape(15.dp))
+                ){
+                    Text(
+                        text = "This Feature will assist in clearing the path for the emergency vehicles\n\n" +
+                                "Please use this feature responsibly !!!",
+                        color = Color(0xFF8A8C8F),
+                        fontSize = 14.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        modifier = Modifier
+                            .padding(bottom = 12.dp, top = 12.dp)
+                            .padding(horizontal = 24.dp)
 
+                    )
+                }
+                Spacer(modifier = Modifier.height(20.dp))
                 if (clearanceEnabled.value) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(1.dp)
                             .padding(horizontal = 16.dp)
-                            .background(Color(0xFFE8F5E9), shape = RoundedCornerShape(15.dp))
+                            .background(Color(0xFFE8F5E9), shape = RoundedCornerShape(12.dp))
                     ) {
                         Text(
                             text = "Started Real Time Tracking",
-                            color = Color(0xFF43A047),
-                            fontSize = 20.sp,
+                            color = Color(0xFF5261C7),
+                            fontSize = 14.sp,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                             modifier = Modifier
                                 .padding(10.dp)
@@ -304,8 +322,8 @@ fun AmbulanceEmerge(padding: PaddingValues) {
 
                         Text(
                             text = "Latitude: ${currentLocationOfAmbulance.value.latitude}, Longitude: ${currentLocationOfAmbulance.value.longitude}",
-                            color = Color(0xFFFF5722),
-                            fontSize = 18.sp,
+                            color = Color(0xFFB71C1C),
+                            fontSize = 14.sp,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                             modifier = Modifier
                                 .padding(0.dp)
@@ -329,7 +347,7 @@ fun AmbulanceEmerge(padding: PaddingValues) {
                         ),
                         cameraPositionState = cameraPositionState
                     ) {
-                        for (recep in recepList.value) {
+                        for (recep in sseClient.RecepModel.recepsState) {
                             Marker(
                                 state = MarkerState(position = LatLng(recep.lat, recep.lon)),
                                 title = if (recep.crowded) "Crowded" else "Not Crowded",
