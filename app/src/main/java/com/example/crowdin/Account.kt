@@ -1,19 +1,14 @@
 package com.example.crowdin
 
 
-import android.annotation.SuppressLint
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,34 +17,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DividerDefaults.color
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SnackbarDefaults.color
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -60,10 +43,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -72,152 +53,125 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapStyleOptions
-import com.google.maps.android.compose.Circle
-import com.google.maps.android.compose.ComposeMapColorScheme
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapType
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
+import androidx.navigation.NavController
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
 import okio.IOException
 import org.json.JSONArray
 import org.json.JSONObject
-import org.slf4j.MDC.put
-
-@OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("UnrememberedMutableState")
 
 @Composable
-fun Account() {
-    var hi = BASE_URL + "/user/update_alert_preferences"
-    val alertTitle = remember { mutableStateOf("") }
-
+fun AccountMain(nav: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-
-            .background(Color.White)
-
-
+            .background(
+                Color.White,
+            )
     ) {
-//        Scaffold(
-//            topBar = {
-//                Row(
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(80.dp)
-//                        .padding(16.dp)
-//                        .background(Color.Transparent)
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Menu,
-//                        contentDescription = "Menu",
-//                        tint = Color(0xFF05445e),
-//                        modifier = Modifier.size(28.dp)
-//                    )
-//                    Icon(
-//                        imageVector = Icons.Default.ArrowDropDown,
-//                        contentDescription = "Arrow",
-//                        tint = Color(0xFF05445e),
-//                        modifier = Modifier.size(28.dp)
-//                    )
-//                }
-//                Row(
-//                    horizontalArrangement = Arrangement.Center,
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(80.dp)
-//                        .padding(16.dp)
-//                        .background(Color.Transparent)
-//                ) {
-//                    Text(
-//                        text = "Crowdin",
-//                        color = Color(0xFF05445e),
-//                        fontSize = 24.sp,
-//                        fontWeight = FontWeight.Bold
-//                    )
-//                }
-//            },
-//            bottomBar = {
-//                Row(
-//                    horizontalArrangement = Arrangement.SpaceEvenly,
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(70.dp)
-//                        .padding(bottom = 0.dp)
-//                        .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
-//                ) {
-//                    Row(
-//                        horizontalArrangement = Arrangement.SpaceEvenly,
-//                        verticalAlignment = Alignment.CenterVertically,
-//                        modifier = Modifier
-//                            .fillMaxSize()
-//                            .background(ColorPalette.lightSurface)
-//                            .alpha(1f)
-//                            .clip(RoundedCornerShape(20.dp))
-//                            .border(
-//                                1.dp,
-//                                ColorPalette.onPrimary,
-//                                RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-//                            )
-//                    ) {
-//                        BottomIconItem(
-//                            imageRes = R.drawable.forum_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-//                            color = ColorPalette.secondary,
-//                            name = "Chats",
-//                            nav = nav
-//                        )
-//                        BottomIconItem(
-//                            imageRes = R.drawable.notifications_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-//                            color = ColorPalette.secondary,
-//                            name = "Alerts",
-//                           nav = nav
-//                        )
-//                        BottomIconItem(
-//                            imageRes = R.drawable.roofing_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-//                            color = ColorPalette.secondary,
-//                            name = "Home",
-//                           nav = nav
-//                        )
-//                        BottomIconItem(
-//                            imageRes = R.drawable.my_location_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-//                            color = ColorPalette.redish,
-//                            name = "Location",
-//                          nav = nav
-//                        )
-//                        BottomIconItem(
-//                            imageRes = R.drawable.admin_panel_settings_24dp_e8eaed_fill0_wght400_grad0_opsz24,
-//                            color = ColorPalette.secondary,
-//                            name = "Account",
-//                           nav = nav
-//                        )
-//                    }
-//                }
-//            },
-//            containerColor = Color.Transparent,
-//            content = {
-//                Account( )
-//
-//            }
-//        )
+        Scaffold(
+            topBar = {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = "Menu",
+                        tint = Color(0xFF05445e),
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Arrow",
+                        tint = Color(0xFF05445e),
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            },
+            bottomBar = {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(70.dp)
+                        .padding(bottom = 0.dp)
+                        .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(ColorPalette.lightSurface)
+                            .alpha(1f)
+                            .clip(RoundedCornerShape(20.dp))
+                            .border(
+                                1.dp,
+                                ColorPalette.onPrimary,
+                                RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                            )
+                    ) {
+                        BottomIconItem(
+                            imageRes = R.drawable.forum_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            color = ColorPalette.secondary,
+                            name = "Chats",
+                            nav = nav
+                        )
+                        BottomIconItem(
+                            imageRes = R.drawable.notifications_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            color = ColorPalette.secondary,
+                            name = "Alerts",
+                            nav = nav
+                        )
+                        BottomIconItem(
+                            imageRes = R.drawable.roofing_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            color = ColorPalette.secondary,
+                            name = "Home",
+                            nav = nav
+                        )
+                        BottomIconItem(
+                            imageRes = R.drawable.my_location_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            color = ColorPalette.secondary,
+                            name = "Location",
+                            nav = nav
+                        )
+                        BottomIconItem(
+                            imageRes = R.drawable.admin_panel_settings_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            color = ColorPalette.redish,
+                            name = "Account",
+                            nav = nav
+                        )
+                    }
+                }
+            },
+            containerColor = Color.Transparent,
+            content = {
+                Account(it)
+            }
+        )
+    }
+}
+
+@Composable
+fun Account(padding: PaddingValues) {
+    val alertTitle = remember { mutableStateOf("") }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(
+                top = padding.calculateTopPadding() - 30.dp,
+                bottom = padding.calculateBottomPadding()
+            )
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -239,14 +193,14 @@ fun Account() {
             )
 
         }
-        Card (
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
 
                 .height(200.dp)
                 .background(Color.White)
                 //.shadow(5.dp, ambientColor = Color.Black)
-               // .clip(shape = RoundedCornerShape(20.dp))
+                // .clip(shape = RoundedCornerShape(20.dp))
                 .padding(8.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
@@ -256,76 +210,78 @@ fun Account() {
             ),
             border = BorderStroke(1.dp, Color.Black)
 
-        ){
-
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-
-                .background(Color.White)
-                .clip(shape = RoundedCornerShape(10.dp)),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
         ) {
 
-             Row(
-                 modifier = Modifier
-                     .clip(shape = CircleShape)
-                     .background(Color.White)
-                     .size(130.dp)
-                     .padding(0.dp, 0.dp),
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+
+                    .background(Color.White)
+                    .clip(shape = RoundedCornerShape(10.dp)),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Row(
+                    modifier = Modifier
+                        .clip(shape = CircleShape)
+                        .background(Color.White)
+                        .size(130.dp)
+                        .padding(0.dp, 0.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
 
-             ){
-                 Image(painterResource(id = R.drawable.jenna) , contentDescription = "Profile Picture",
-                     contentScale = ContentScale.Crop,
-                     modifier = Modifier
-                         .size(130.dp)
-                         .clip(CircleShape)
-                         .border(2.dp, Color.Black, CircleShape)
-                         .clip(CircleShape)
-                 )
+                ) {
+                    Image(
+                        painterResource(id = R.drawable.jenna),
+                        contentDescription = "Profile Picture",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(130.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, Color.Black, CircleShape)
+                            .clip(CircleShape)
+                    )
 
-             }
+                }
 
 
 
-            Text(
-                modifier = Modifier.padding(16.dp, 0.dp),
-                text = userName.value,
-                style = TextStyle(
-                    // fontFamily = FontFamily.SansSerif,
-                    //fontWeight = FontWeight.Bold,
-                    fontSize = 30.sp
+                Text(
+                    modifier = Modifier.padding(16.dp, 0.dp),
+                    text = userName.value,
+                    style = TextStyle(
+                        // fontFamily = FontFamily.SansSerif,
+                        //fontWeight = FontWeight.Bold,
+                        fontSize = 30.sp
+                    )
                 )
-            )
+
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp, 0.dp)
+
+                    .background(Color.White)
+                    .clip(shape = RoundedCornerShape(10.dp)),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = "email: ${userName.value}@gmail.com", style = TextStyle(
+                        // fontFamily = FontFamily.SansSerif,
+                        //fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp, color = Color.Gray
+                    )
+                )
+
+
+            }
 
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp, 0.dp)
-
-                .background(Color.White)
-                .clip(shape = RoundedCornerShape(10.dp)),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.Top
-        ) {
-            Text(
-                text = "email: ${userName.value}@gmail.com", style = TextStyle(
-                    // fontFamily = FontFamily.SansSerif,
-                    //fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp, color = Color.Gray
-                )
-            )
-
-
-        }
-
-  }
         Spacer(
             modifier = Modifier
                 .height(10.dp)
@@ -690,7 +646,7 @@ fun Account() {
             )
 
         }
-        if(AccidentCheck==DisasterCheck==CycloneChecked==AnimalChecked==otherAlertChecked==true) {
+        if (AccidentCheck == DisasterCheck == CycloneChecked == AnimalChecked == otherAlertChecked == true) {
             val jasonObject = JSONObject().apply {
                 put("username", userName.value)
 

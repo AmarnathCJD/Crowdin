@@ -143,7 +143,8 @@ fun EmergencyVehiclePage(nav: NavController) {
                         BottomIconItem(
                             imageRes = R.drawable.admin_panel_settings_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                             color = ColorPalette.secondary,
-                            name = "Account"
+                            name = "Account",
+                            nav = nav
                         )
                     }
                 }
