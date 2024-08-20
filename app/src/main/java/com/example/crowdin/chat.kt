@@ -6,6 +6,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -48,7 +49,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.BlockThreshold
 import com.google.ai.client.generativeai.type.Content
+import com.google.ai.client.generativeai.type.HarmCategory
+import com.google.ai.client.generativeai.type.SafetySetting
 import com.google.ai.client.generativeai.type.TextPart
 import com.google.ai.client.generativeai.type.generationConfig
 import kotlinx.coroutines.launch
@@ -61,9 +65,27 @@ val generativeModel = GenerativeModel(
         role = "system",
         parts = listOf(
             TextPart(
-                text = "You are Crowdin AI, an InApp assistant for the app named 'Crowdin', The app is a Crowd Alert App which alerts the users about nearby traffic related issues, and animal attacks reported, the primary source of data is the users itself, so be like the ai for tha pp and assist users needs, dont answer out of scope questions, also provide disaster relief information, and help users with their account related issues, also no support for markdown formattings, so dont add formattings to the response, also help if the query is related to latlon etc, which deals with locating, alerts, etc., dont add ** in message for formatting"
+                text = "You are Crowdin AI, an InApp assistant for the app named 'Crowdin', The app is a Crowd Alert App which alerts the users about nearby traffic related issues, and animal attacks reported, the primary source of data is the users itself, so be like the ai for tha pp and assist users needs, dont answer out of scope questions, also provide disaster relief information, and help users with their account related issues, also no support for markdown formattings, so dont add formattings to the response, also help if the query is related to latlon etc, which deals with locating, alerts, etc., dont add ** in message for markdown formatting, as it is not supported parsing."
             )
         )
+    ),
+    safetySettings = listOf(
+        SafetySetting(
+            HarmCategory.SEXUALLY_EXPLICIT,
+            BlockThreshold.NONE
+        ),
+        SafetySetting(
+            HarmCategory.DANGEROUS_CONTENT,
+            BlockThreshold.NONE
+        ),
+        SafetySetting(
+            HarmCategory.HATE_SPEECH,
+            BlockThreshold.NONE
+        ),
+        SafetySetting(
+            HarmCategory.HARASSMENT,
+            BlockThreshold.NONE
+        ),
     ),
     generationConfig = generationConfig {
         temperature = 0.75f
@@ -211,11 +233,22 @@ var aiChat = generativeModel.startChat(
 )
 
 suspend fun prompt(prompt: String) {
-    val response = aiChat.sendMessage(
-        prompt
-    )
-    if (response.text != null) {
-        sseClient.ChatViewModel.sendMessage("1", response.text!!.trimIndent(), "AI")
+    aiChat.sendMessage("This is the updated dataset, while answering nextQn, please consider data too: ${sseClient.AlertViewModel.alertState.alerts}, also user location: ${currentLocation.value.latitude}, ${currentLocation.value.longitude}, also username: ${userName.value}, also dont loose previous context and system instructions")
+    try {
+        val response = aiChat.sendMessage(prompt)
+        if (response.text != null) {
+            sseClient.ChatViewModel.sendMessage(
+                "1",
+                response.text!!.trimIndent().replace("**", ""),
+                "AI"
+            )
+        }
+    } catch (e: Exception) {
+        sseClient.ChatViewModel.sendMessage(
+            "1",
+            "Sorry, I am not able to answer this question right now",
+            "AI"
+        )
     }
 }
 
@@ -250,24 +283,28 @@ fun ChatInput() {
                         contentDescription = "Send",
                         modifier = Modifier
                             .size(24.dp)
-                            .clickable {
-                                if (chatText.isEmpty()) return@clickable
-                                val prompt = chatText
-                                sseClient.ChatViewModel.sendMessage(
-                                    convoId.toString(),
-                                    chatText,
-                                    myName
-                                )
-                                chatText = ""
-                                if (convoId == 1) {
-                                    coroutineScope.launch {
-                                        typingAnimation = 1
-                                        prompt(prompt)
-                                        typingAnimation = 0
-                                        return@launch
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {
+                                    if (chatText.isEmpty()) return@clickable
+                                    val prompt = chatText
+                                    sseClient.ChatViewModel.sendMessage(
+                                        convoId.toString(),
+                                        chatText,
+                                        myName
+                                    )
+                                    chatText = ""
+                                    if (convoId == 1) {
+                                        coroutineScope.launch {
+                                            typingAnimation = 1
+                                            prompt(prompt)
+                                            typingAnimation = 0
+                                            return@launch
+                                        }
                                     }
-                                }
-                            },
+                                },
+                            ),
                         alignment = Alignment.Center,
                         colorFilter = ColorFilter.tint(ColorPalette.secondary)
                     )

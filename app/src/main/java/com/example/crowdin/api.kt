@@ -16,10 +16,9 @@ import org.json.JSONObject
 import java.net.URI
 import java.time.Duration
 
-var BASE_URL = "https://3fc8ee11474726bc33447804115cb41f.serveo.net"
+var BASE_URL = "https://running-krill-amarnathcjd-d8e56e16.koyeb.app"
 
 var sseClient = SSEClient()
-
 data class ChatMessage(
     val chatId: String,
     val message: String,
