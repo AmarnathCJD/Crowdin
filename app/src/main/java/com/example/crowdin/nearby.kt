@@ -322,7 +322,7 @@ fun NearbyUsers(padding: PaddingValues, nav: NavController) {
         )
 
         Text(
-            "Radius: ${String.format("%.2f", sliderValue.floatValue * 100)} km",
+            "Radius: ${String.format("%.0f", sliderValue.floatValue * 100)} km",
             modifier = Modifier.padding(horizontal = 16.dp),
             color = Color(0xFF311B92),
             fontWeight = FontWeight.Bold,
@@ -365,7 +365,7 @@ fun NearbyUsers(padding: PaddingValues, nav: NavController) {
                             }
                             val body = response.body?.string()
                             val json = body?.let { JSONObject(it) }
-                            if (json != null) {
+                            if (json != null && json.has("event")) {
                                 val event = json.getJSONObject("event")
                                 cev.eventId = event.getInt("event_id")
                                 cev.title = event.getString("title")
@@ -379,6 +379,9 @@ fun NearbyUsers(padding: PaddingValues, nav: NavController) {
                                     )
                                 }
                                 showSuccess.value = true
+                            } else {
+                                showError.value = true
+                                errorMessage.value = "Invalid Event ID"
                             }
                         }
                     })
@@ -387,7 +390,8 @@ fun NearbyUsers(padding: PaddingValues, nav: NavController) {
             modifier = Modifier.padding(24.dp),
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (scanOnGoing.value) Color(0xFFE1BEE7) else Color(
+                containerColor = if (scanOnGoing.value) Color(0xFF7E57C2) else
+                    Color(
                     0xFF9575CD
                 ),
                 contentColor = Color.White
@@ -398,7 +402,7 @@ fun NearbyUsers(padding: PaddingValues, nav: NavController) {
                 if (scanOnGoing.value) ".... Nearby Users" else "Scan Nearby Users",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                color = if (scanOnGoing.value) Color(0xFF9575CD) else Color.White,
+                color = Color.White,
                 modifier = Modifier.padding(8.dp)
             )
         }

@@ -732,7 +732,8 @@ fun WelcomeMessage(loggedInUser: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp)
+            .padding(horizontal =
+            12.dp)
             .background(
                 Color(0xFFF3E5F5),
                 shape = RoundedCornerShape(8.dp)
@@ -744,8 +745,8 @@ fun WelcomeMessage(loggedInUser: String) {
         ) {
             Text(
                 text = "$AppName Dashboard",
-                color = Color(0xFFF4511E),
-                modifier = Modifier.padding(vertical = 19.dp, horizontal = 5.dp),
+                color = Color(0xFFAF4B49),
+                modifier = Modifier.padding(vertical = 16.dp, horizontal = 5.dp),
                 fontWeight = FontWeight.Black,
                 fontSize = 20.sp
             )
