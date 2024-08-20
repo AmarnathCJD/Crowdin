@@ -216,7 +216,7 @@ fun AlertsList() {
                     }
             }
 
-            sseClient.AlertViewModel.alertState.alerts.forEach {
+            sseClient.AlertViewModel.alertState.alerts.sortedBy { it.time }.forEach {
                 if (it.user != userName.value)
                     item {
                         AlertItemBasic(it)
@@ -377,7 +377,7 @@ fun AlertItemBasic(emergency: AlertObject) {
             modifier = Modifier.padding(horizontal = 24.dp)
         )
         val locationName = remember { mutableStateOf("Location") }
-        LaunchedEffect (Unit) {
+        LaunchedEffect(Unit) {
             resolveCoordinatesAsync(emergency.lat, emergency.lon, locationName)
         }
         if (locationName.value != "Location") {
