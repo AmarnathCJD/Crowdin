@@ -1,10 +1,8 @@
 package com.example.crowdin
 
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,10 +17,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
@@ -30,7 +26,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -48,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -56,7 +50,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -71,7 +64,6 @@ import okio.IOException
 import org.json.JSONArray
 import org.json.JSONObject
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun AccountMain(nav: NavController) {
     Column(
@@ -163,9 +155,7 @@ fun AccountMain(nav: NavController) {
             },
             containerColor = Color.Transparent,
             content = {
- Account(it)
-               // StartupScreen(onStartupComplete = { PreviewStartupScreen() })
-               // animalRepel()
+                Account(it)
             }
         )
     }
@@ -206,20 +196,16 @@ fun Account(padding: PaddingValues) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-
-                .height(200.dp)
+                .height(220.dp)
                 .background(Color.White)
-//                .shadow(5.dp, ambientColor = Color.Black)
-                .clip(shape = RoundedCornerShape(20.dp))
                 .padding(8.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 contentColor = Color.Black,
-                containerColor = Color(0xFFF3E5F5)
+                containerColor = Color(0xFFEDE7F6)
 
             ),
-            elevation =CardDefaults.cardElevation( 10.dp)
-            //border = BorderStroke(1.dp, Color.Black)
+            border = BorderStroke(1.dp, Color.Black)
 
         ) {
 
@@ -227,9 +213,7 @@ fun Account(padding: PaddingValues) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp, 10.dp)
-
-                    .background(Color.Transparent)
+                    .padding(16.dp)
                     .clip(shape = RoundedCornerShape(10.dp)),
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
@@ -264,9 +248,8 @@ fun Account(padding: PaddingValues) {
                     modifier = Modifier.padding(16.dp, 0.dp),
                     text = userName.value,
                     style = TextStyle(
-                        // fontFamily = FontFamily.SansSerif,
-                        //fontWeight = FontWeight.Bold,
-                        fontSize = 30.sp
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
                     )
                 )
 
@@ -275,18 +258,15 @@ fun Account(padding: PaddingValues) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp, 0.dp)
-
-                    .background(Color.Transparent)
                     .clip(shape = RoundedCornerShape(10.dp)),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
                     text = "email: ${userName.value}@gmail.com", style = TextStyle(
-                        fontFamily = FontFamily.SansSerif,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 18.sp, color = Color.Gray
-                    )
+                        fontSize = 18.sp, color = Color.Gray, fontWeight = FontWeight.Bold
+                    ),
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
 
 
@@ -296,44 +276,28 @@ fun Account(padding: PaddingValues) {
         Spacer(
             modifier = Modifier
                 .height(10.dp)
-                //.padding(5.dp)
+                .padding(5.dp)
                 .fillMaxWidth()
-
-//
-                .background(Color.White)
         )
 
         val update_password = remember { mutableStateOf("") }
         val confirm_password = remember { mutableStateOf("") }
 
-
-        Column(
-            modifier = Modifier.verticalScroll(rememberScrollState())
-        ) {
-
-
-
-
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                // .shadow(5.dp)
                 .background(Color.White),
             shape = RoundedCornerShape(10.dp),
             colors = CardDefaults.cardColors(
                 contentColor = Color.Black,
                 containerColor = Color.White
-
             )
         ) {
-
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp, 5.dp)
                     .height(40.dp)
-                    //bg color code of grey
                     .background(Color.Transparent),
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
@@ -341,24 +305,18 @@ fun Account(padding: PaddingValues) {
                 Text(
                     text = "Change Password", style = TextStyle(
                         fontFamily = FontFamily.SansSerif,
-
-                        fontSize = 20.sp
+                        fontSize = 16.sp
                     ), textAlign = TextAlign.Center
                 )
-
             }
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp, 5.dp)
+                    .padding(16.dp, 2.dp)
                     .height(50.dp)
-                    //bg color code of grey
                     .background(Color.Transparent),
-
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
-
             ) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -377,14 +335,12 @@ fun Account(padding: PaddingValues) {
                     ),
                     shape = RoundedCornerShape(10.dp),
                 )
-
             }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp, 5.dp)
+                    .padding(16.dp, 2.dp)
                     .height(40.dp)
-                    //bg color code of grey
                     .background(Color.Transparent),
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
@@ -392,23 +348,18 @@ fun Account(padding: PaddingValues) {
                 Text(
                     text = "Confirm Password", style = TextStyle(
                         fontFamily = FontFamily.SansSerif,
-
-                        fontSize = 20.sp
+                        fontSize = 16.sp
                     ), textAlign = TextAlign.Center
                 )
-
             }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp, 5.dp)
                     .height(50.dp)
-                    //bg color code of grey
                     .background(Color.Transparent),
-
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
-
             ) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -427,7 +378,6 @@ fun Account(padding: PaddingValues) {
                     ),
                     shape = RoundedCornerShape(10.dp),
                 )
-
             }
             var showAlertDialog by remember { mutableStateOf(false) }
             Row(
@@ -438,60 +388,53 @@ fun Account(padding: PaddingValues) {
                     .background(Color.Transparent),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
-
-
             ) {
-                Button(onClick = {
-                    if (update_password.value == confirm_password.value) {
-
-                        val client = OkHttpClient()
-                        val url = "${BASE_URL}/user/update_password"
-                        println("url is $url")
-                        val request = okhttp3.Request.Builder()
-                            .url(url)
-                            .post(
-                                JSONObject(
-                                    mapOf(
-                                        "username" to userName.value,
-                                        "password" to update_password.value
-                                    )
-                                ).toString().toRequestBody("application/json".toMediaTypeOrNull())
-                            )
-                            .build()
-
-                        client.newCall(request).enqueue(object : Callback {
-                            override fun onFailure(call: Call, e: IOException) {
-                                println("Failed to execute request")
-                                alertTitle.value = "Failed to update password"
-                                showAlertDialog = true
-                            }
-
-                            override fun onResponse(call: Call, response: okhttp3.Response) {
-                                val body = response.body?.string()
-                                println("Response Body: $body")
-
-                                if (response.code == 200) {
-                                    alertTitle.value = "200"
-                                    showAlertDialog = true
-
-                                } else {
+                Button(
+                    onClick = {
+                        if (update_password.value == confirm_password.value) {
+                            val client = OkHttpClient()
+                            val url = "${BASE_URL}/user/update_password"
+                            val request = Request.Builder()
+                                .url(url)
+                                .post(
+                                    JSONObject(
+                                        mapOf(
+                                            "username" to userName.value,
+                                            "password" to update_password.value
+                                        )
+                                    ).toString()
+                                        .toRequestBody("application/json".toMediaTypeOrNull())
+                                )
+                                .build()
+                            client.newCall(request).enqueue(object : Callback {
+                                override fun onFailure(call: Call, e: IOException) {
                                     alertTitle.value = "Failed to update password"
                                     showAlertDialog = true
                                 }
-                            }
-                        })
 
+                                override fun onResponse(call: Call, response: okhttp3.Response) {
+                                    val body = response.body?.string()
+                                    println("Response Body: $body")
 
-                        //update password
-                    } else {
-                        showAlertDialog = true
-                    }
+                                    if (response.code == 200) {
+                                        alertTitle.value = "200"
+                                        showAlertDialog = true
 
-                }) {
+                                    } else {
+                                        alertTitle.value = "Failed to update password"
+                                        showAlertDialog = true
+                                    }
+                                }
+                            })
+                        } else {
+                            showAlertDialog = true
+                        }
+
+                    },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
                     Text("Save Changes")
                 }
-
-
             }
             if (showAlertDialog) {
                 AlertDialog(
@@ -518,43 +461,34 @@ fun Account(padding: PaddingValues) {
         }
         var AccidentCheck by remember { mutableStateOf(false) }
         var DisasterCheck by remember { mutableStateOf(false) }
-        // var option3Checked by remember { mutableStateOf(false) }
         var AnimalChecked by remember { mutableStateOf(false) }
         var CycloneChecked by remember { mutableStateOf(false) }
         var otherAlertChecked by remember { mutableStateOf(false) }
 
-        Row() {
-            //drop down text box for alert preference
+        Row {
             var expanded by remember { mutableStateOf(false) }
-
             Row(
                 modifier = Modifier
                     .padding(16.dp)
-                    // .clickable(onClick = { expanded = true })
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .clickable(onClick = { expanded = true }),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
-
             ) {
                 Text(
                     "Select alert preference", style = TextStyle(
                         fontFamily = FontFamily.SansSerif,
-                        // fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
-                    ),
-                    modifier = Modifier
-                        .clickable(onClick = { expanded = true })
+                        fontSize = 16.sp
+                    )
                 )
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = "Dropdown Arrow",
                     modifier = Modifier
                         .padding(start = 8.dp)
-                        .clickable(onClick = { expanded = true })
                 )
             }
 
-            // Dropdown Menu
             DropdownMenu(modifier = Modifier
                 .width(300.dp)
                 .clip(RoundedCornerShape(20.dp))
@@ -562,17 +496,12 @@ fun Account(padding: PaddingValues) {
                 offset = DpOffset(50.dp, 0.dp),
                 expanded = expanded,
                 onDismissRequest = { expanded = false }) {
-                // First Checkbox Option
                 DropdownMenuItem(
-                    //modifier = Modifier.padding(8.dp),
-
                     text = { Text("Accident Alert") },
                     onClick = { AccidentCheck = !AccidentCheck },
                     trailingIcon = {
                         Checkbox(checked = AccidentCheck, onCheckedChange = { AccidentCheck = it })
                     })
-
-                // Second Checkbox Option
                 DropdownMenuItem(text = { Text("Disaster Alert") },
                     onClick = { DisasterCheck = !DisasterCheck },
                     trailingIcon = {
@@ -632,17 +561,15 @@ fun Account(padding: PaddingValues) {
             Text(
                 text = "Select Alert Radius", style = TextStyle(
                     fontFamily = FontFamily.SansSerif,
-
-                    fontSize = 20.sp
+                    fontSize = 16.sp
                 ), textAlign = TextAlign.Center
             )
-
         }
         val AlertDistance = remember { mutableStateOf("") }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp, 5.dp)
+                .padding(16.dp, 2.dp)
                 .height(50.dp)
                 .background(Color.Transparent),
             horizontalArrangement = Arrangement.Start,
@@ -666,15 +593,13 @@ fun Account(padding: PaddingValues) {
                 ),
                 shape = RoundedCornerShape(10.dp),
             )
-
         }
-        if (AccidentCheck == DisasterCheck == CycloneChecked == AnimalChecked == otherAlertChecked == true) {
+        if (AccidentCheck == DisasterCheck == CycloneChecked == AnimalChecked == otherAlertChecked) {
             val jasonObject = JSONObject().apply {
                 put("username", userName.value)
 
                 put("alert_preferences", JSONArray().apply {
-                    if (AccidentCheck == DisasterCheck == CycloneChecked == AnimalChecked == otherAlertChecked == true) {
-
+                    if (AccidentCheck == DisasterCheck == CycloneChecked == AnimalChecked == otherAlertChecked) {
                         put("1")
                     } else {
                         put("0")
@@ -724,7 +649,6 @@ fun Account(padding: PaddingValues) {
                 override fun onFailure(call: Call, e: IOException) {
                     println("Failed to execute request")
                     alertTitle.value = "Failed to update alert preferences"
-                    // showAlertDialog = true
                 }
 
                 override fun onResponse(call: Call, response: okhttp3.Response) {
@@ -735,11 +659,9 @@ fun Account(padding: PaddingValues) {
 
                     if (response.code == 200) {
                         alertTitle.value = "200"
-                        // showAlertDialog = true
 
                     } else {
                         alertTitle.value = "Failed to update alert preferences"
-                        //  showAlertDialog = true
                     }
                 }
             })
@@ -754,19 +676,14 @@ fun Account(padding: PaddingValues) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(onClick = { }) {
+            Button(
+                onClick = { },
+                shape = RoundedCornerShape(10.dp)
+            ) {
                 Text("Save Changes")
-
             }
-
-
         }
     }
-
-
-    }
-
-
 }
 
 

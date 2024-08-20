@@ -474,7 +474,7 @@ fun AlertItemBasic(emergency: AlertObject) {
                     }
                 },
                 modifier = Modifier
-                    .padding(12.dp),
+                    .padding(6.dp),
                 shape = RoundedCornerShape(13.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF43A047)),
             ) {
@@ -506,7 +506,7 @@ fun AlertItemBasic(emergency: AlertObject) {
                     }
                 },
                 modifier = Modifier
-                    .padding(12.dp),
+                    .padding(6.dp),
                 shape = RoundedCornerShape(13.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
             ) {

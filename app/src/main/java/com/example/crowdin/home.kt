@@ -386,6 +386,50 @@ fun HomeMain(it: PaddingValues, nav: NavController) {
             }
         }
 
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Card(
+                colors = CardColors(
+                    containerColor = Color(0xFFFFCA28),
+                    contentColor = Color.White,
+                    disabledContentColor = Color(0xFF6A1B9A),
+                    disabledContainerColor = Color(0xFFE1BEE7),
+                ),
+                modifier = Modifier
+                    .padding(bottom = 4.dp, top = 4.dp, start = 16.dp, end = 16.dp)
+                    .padding(horizontal = 20.dp)
+                    .fillMaxWidth()
+                    .height(45.dp)
+                    .clickable {
+                        nav.navigate("Animal")
+                    },
+                shape = RoundedCornerShape(10.dp),
+                elevation = CardDefaults.cardElevation(6.dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add",
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                    Text(
+                        text = "BuzzzzIN",
+                        style = TextStyle(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         InfoBox(message1 = "Nearby Alerts")

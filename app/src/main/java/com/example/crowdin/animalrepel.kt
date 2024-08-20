@@ -3,22 +3,29 @@ package com.example.crowdin
 import android.media.MediaPlayer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -29,35 +36,128 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
-fun animalRepel() {
-    var expanded by remember { mutableStateOf(false) }
-    var selectedItem by remember { mutableStateOf("") }
-
-
+fun AnimalPage(nav: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color.White),
+            .background(
+                Color.White,
+            )
+    ) {
+        Scaffold(
+            topBar = {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .padding(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = "Menu",
+                        tint = Color(0xFF05445e),
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Arrow",
+                        tint = Color(0xFF05445e),
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            },
+            bottomBar = {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(70.dp)
+                        .padding(bottom = 0.dp)
+                        .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(ColorPalette.lightSurface)
+                            .alpha(1f)
+                            .clip(RoundedCornerShape(20.dp))
+                            .border(
+                                1.dp,
+                                ColorPalette.onPrimary,
+                                RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                            )
+                    ) {
+                        BottomIconItem(
+                            imageRes = R.drawable.forum_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            color = ColorPalette.secondary,
+                            name = "Chats",
+                            nav = nav
+                        )
+                        BottomIconItem(
+                            imageRes = R.drawable.notifications_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            color = ColorPalette.secondary,
+                            name = "Alerts",
+                            nav = nav
+                        )
+                        BottomIconItem(
+                            imageRes = R.drawable.roofing_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            color = ColorPalette.redish,
+                            name = "Home",
+                            nav = nav
+                        )
+                        BottomIconItem(
+                            imageRes = R.drawable.my_location_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            color = ColorPalette.secondary,
+                            name = "Location",
+                            nav = nav
+                        )
+                        BottomIconItem(
+                            imageRes = R.drawable.admin_panel_settings_24dp_e8eaed_fill0_wght400_grad0_opsz24,
+                            color = ColorPalette.secondary,
+                            name = "Account",
+                            nav = nav
+                        )
+                    }
+                }
+            },
+            containerColor = Color.Transparent,
+            content = {
+                AnimalRepel(nav, it)
+            }
+        )
+    }
+}
 
-        //horizontalAlignment = Alignment.CenterHorizontally,
-        //verticalArrangement = Arrangement.Center
-
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AnimalRepel(nav: NavController, padding: PaddingValues) {
+    var expanded by remember { mutableStateOf(false) }
+    var selectedItem by remember { mutableStateOf("") }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color.White)
+            .padding(
+                top = padding.calculateTopPadding() - 30.dp,
+                bottom = padding.calculateBottomPadding(),
+            ),
     ) {
         Row(
             modifier = Modifier
@@ -86,7 +186,6 @@ fun animalRepel() {
             Text(
                 text = "This mode will help you to repel animals", style = TextStyle(
                     color = Color.Black, fontSize = 20.sp, fontWeight = FontWeight.Bold,
-
                     )
             )
         }
@@ -100,23 +199,20 @@ fun animalRepel() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-
                 text = "Our app’s Animal Repellent Mode uses sound frequencies to keep unwanted animals away. The high-pitched sounds are usually inaudible to humans but are effective at scaring off animals . You can choose different sound settings depending on which animal you want to repel.",
                 style = TextStyle(
                     color = Color.Black, fontSize = 15.sp
                 )
             )
         }
-
-
         Row(
             modifier = Modifier
                 .width(700.dp)
 
-              //  .wrapContentWidth( Alignment.CenterHorizontally)
+                //  .wrapContentWidth( Alignment.CenterHorizontally)
                 .background(color = Color.Transparent)
                 .clip(shape = RoundedCornerShape(60.dp))
-                .padding(16.dp,10.dp),
+                .padding(16.dp, 10.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -207,7 +303,7 @@ fun animalRepel() {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(color = Color.White)
-                .padding(16.dp,0.dp),
+                .padding(16.dp, 0.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {

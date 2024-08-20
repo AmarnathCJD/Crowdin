@@ -38,6 +38,9 @@ class MainActivity : ComponentActivity() {
                     "Account",
                 ) { AccountMain(nav) }
                 composable(
+                    "Animal",
+                ) { AnimalPage(nav) }
+                composable(
                     "Location",
                 ) { MainLayout(nav) }
                 composable(
