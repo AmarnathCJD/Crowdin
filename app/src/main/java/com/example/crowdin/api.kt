@@ -312,7 +312,7 @@ class EmergencyModel {
         val updatedEmergencies = emergenciesState.toMutableList()
         for (emergency in emergencies) {
             if (updatedEmergencies.none { it.username == emergency.username && it.active }) {
-                if (emergency.username != userName.value && !ifIsFirstReqAfterInit && emergency.active) {
+                if (emergency.username != userName.value && emergency.active && !ifIsFirstReqAfterInit) {
                     notification.value = Notification(
                         "Ambulance Nearby",
                         "There is an ambulance nearby, please make way",
@@ -321,6 +321,20 @@ class EmergencyModel {
                     isTherePendingAlert.value = true
                 }
                 updatedEmergencies.add(emergency)
+            } else {
+                if (!ifIsFirstReqAfterInit) {
+                    val index =
+                        updatedEmergencies.indexOfFirst { it.username == emergency.username }
+                    if (updatedEmergencies[index].active != emergency.active && emergency.active) {
+                        updatedEmergencies[index] = emergency
+                        notification.value = Notification(
+                            "Ambulance Nearby",
+                            "There is an ambulance nearby, please make way",
+                            true
+                        )
+                        isTherePendingAlert.value = true
+                    }
+                }
             }
         }
         emergenciesState = updatedEmergencies

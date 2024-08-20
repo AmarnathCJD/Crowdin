@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -733,20 +734,22 @@ fun WelcomeMessage(loggedInUser: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal =
-            12.dp)
+            14.dp)
+            .padding(bottom = 12.dp)
             .background(
                 Color(0xFFF3E5F5),
                 shape = RoundedCornerShape(8.dp)
             )
     ) {
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
+        ElevatedButton(
+            onClick = { /*TODO*/ },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
         ) {
             Text(
                 text = "$AppName Dashboard",
-                color = Color(0xFFAF4B49),
-                modifier = Modifier.padding(vertical = 16.dp, horizontal = 5.dp),
+                color = Color(0xFFFF7043),
+                modifier = Modifier.padding(vertical = 12.dp, horizontal = 5.dp),
                 fontWeight = FontWeight.Black,
                 fontSize = 20.sp
             )
@@ -754,8 +757,8 @@ fun WelcomeMessage(loggedInUser: String) {
                 painter = painterResource(id = R.drawable.crowdsource_24dp_e8eaed_fill0_wght400_grad0_opsz24),
                 contentDescription = "$AppName Logo",
                 modifier = Modifier
-                    .size(50.dp)
-                    .padding(top = 8.dp),
+                    .size(40.dp)
+                    .padding(top = 0.dp),
                 colorFilter = ColorFilter.tint(Color(0xFFF4511E))
             )
         }
@@ -765,21 +768,23 @@ fun WelcomeMessage(loggedInUser: String) {
                 .fillMaxWidth()
                 .padding(vertical = 8.dp, horizontal = 12.dp)
         ) {
-            Box(
+            ElevatedButton(
+                onClick = { /*TODO*/ },
                 modifier = Modifier
                     .background(
-                        Color(0xFFD1C4E9),
-                        shape = RoundedCornerShape(12.dp)
+                        Color(0x86C5CAE9),
+                        shape = RoundedCornerShape(8.dp)
                     )
-                    .padding(horizontal = 40.dp)
-                    .padding(end = 6.dp)
+                    .padding(horizontal = 36.dp)
+                    .padding(end = 12.dp),
+                shape = RoundedCornerShape(8.dp),
             ) {
                 Text(
                     text = "Welcome $loggedInUser >",
                     color = Color(0xFF9575CD),
                     modifier = Modifier.padding(8.dp),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
+                    fontSize = 14.sp
                 )
             }
         }
@@ -833,7 +838,7 @@ fun LocationDisplay(location: String, latitude: Double = 0.0, longitude: Double 
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ElevatedCard(

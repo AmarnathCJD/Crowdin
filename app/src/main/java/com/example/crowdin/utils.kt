@@ -274,7 +274,7 @@ fun TowerInfoScreen() {
                     horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
                 ) {
                     Text(
-                        "TowerID: ${towerDetails?.get("cellId")} LAC: ${towerDetails?.get("tac")} MCC: ${
+                        "Tower-ID: ${towerDetails?.get("cellId")} LAC: ${towerDetails?.get("tac")} MCC: ${
                             towerDetails?.get(
                                 "mcc"
                             )

@@ -317,7 +317,7 @@ fun MapViewMain(paddingValues: PaddingValues, nav: NavController) {
                     Circle(
                         center = LatLng(alert.lat, alert.lon),
                         radius = alert.radius.toDouble() * 1000,
-                        fillColor = Color(0x220000FF),
+                        fillColor = Color(0x170000FF),
                         tag = alert.id.toString(),
                         strokeColor = Color(0x220000FF),
                         strokeWidth = 5f,
