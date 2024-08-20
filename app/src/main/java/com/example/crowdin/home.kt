@@ -1,6 +1,7 @@
 package com.example.crowdin
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.text.format.DateUtils
@@ -8,9 +9,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -32,15 +36,21 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,14 +61,26 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.times
+import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
+import androidx.wear.compose.material.ExperimentalWearMaterialApi
+import androidx.wear.compose.material.FractionalThreshold
+import androidx.wear.compose.material.SwipeableState
+import androidx.wear.compose.material.rememberSwipeableState
+import androidx.wear.compose.material.swipeable
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.CameraPosition
@@ -78,6 +100,7 @@ import kotlinx.coroutines.launch
 
 var nearbyAlertsEnabled = mutableStateOf(true)
 var userName = mutableStateOf("rlx")
+val SOSBox = mutableStateOf(false)
 
 @Composable
 fun Home(nav: NavController) {
@@ -213,6 +236,9 @@ fun BottomIconItem(imageRes: Int, color: Color, name: String = "Icon", nav: NavC
 
 @Composable
 fun HomeMain(it: PaddingValues, nav: NavController) {
+    if (SOSBox.value) {
+        SOSCancelBoxWithZIndex()
+    }
     Column(
         modifier = Modifier
             .padding(
@@ -221,7 +247,6 @@ fun HomeMain(it: PaddingValues, nav: NavController) {
             )
             .verticalScroll(rememberScrollState())
     ) {
-
         WelcomeMessage(loggedInUser = "@" + userName.value)
 
         val locationName = remember { mutableStateOf("Unknown") }
@@ -246,7 +271,8 @@ fun HomeMain(it: PaddingValues, nav: NavController) {
                 iconRes = R.drawable.sos_24dp_e8eaed_fill0_wght400_grad0_opsz24,
                 contentDescription = "Add",
                 click = {
-                    SOSSoundActive.value = !SOSSoundActive.value
+                    //SOSSoundActive.value = !SOSSoundActive.value
+                    SOSBox.value = !SOSBox.value
                 }
             )
             if (nearbyAlertsEnabled.value) {
@@ -733,8 +759,10 @@ fun WelcomeMessage(loggedInUser: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal =
-            14.dp)
+            .padding(
+                horizontal =
+                14.dp
+            )
             .padding(bottom = 12.dp)
             .background(
                 Color(0xFFF3E5F5),
@@ -921,6 +949,7 @@ fun PlaySOS() {
 
     LaunchedEffect(SOSSoundActive.value) {
         if (SOSSoundActive.value) {
+            println("Playing SOS Sound")
             scope.launch(Dispatchers.IO) {
                 try {
                     val fileDescriptor = context.resources.openRawResourceFd(R.raw.alert_sound)
@@ -954,6 +983,65 @@ fun PlaySOS() {
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer.release()
+        }
+    }
+}
+
+@Composable
+fun SOSCancelBoxWithZIndex() {
+    if (SOSBox.value) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xC4000000))
+                .zIndex(5f)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp)
+                    .padding(bottom = 300.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(Color(0xB2BB3634), shape = RoundedCornerShape(10.dp))
+                        .padding(20.dp)
+                        .padding(horizontal = 30.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                ) {
+                    Text(
+                        text = "SOS Alert",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                val timer = remember { mutableIntStateOf(5) }
+                LaunchedEffect(true) {
+                    while (timer.intValue > 0) {
+                        delay(1000)
+                        timer.intValue--
+                        if (timer.intValue == 0) {
+                            SOSSoundActive.value = true
+                        }
+                    }
+                }
+                Text(
+                    text = if (timer.intValue > 0) "Cancel in ${timer.intValue} seconds" else "SOS Alert Activated",
+                    color = Color(0xFFC5CAE9),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 20.dp)
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                SlideToUnlock(isLoading = false, onUnlockRequested = {
+                    SOSBox.value = false
+                    SOSSoundActive.value = false
+                })
+            }
         }
     }
 }
