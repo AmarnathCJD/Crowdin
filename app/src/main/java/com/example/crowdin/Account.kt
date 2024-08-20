@@ -1,8 +1,10 @@
 package com.example.crowdin
 
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,8 +19,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
@@ -26,6 +30,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -43,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -50,6 +56,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,6 +71,7 @@ import okio.IOException
 import org.json.JSONArray
 import org.json.JSONObject
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun AccountMain(nav: NavController) {
     Column(
@@ -155,7 +163,9 @@ fun AccountMain(nav: NavController) {
             },
             containerColor = Color.Transparent,
             content = {
-                Account(it)
+ Account(it)
+               // StartupScreen(onStartupComplete = { PreviewStartupScreen() })
+               // animalRepel()
             }
         )
     }
@@ -199,16 +209,17 @@ fun Account(padding: PaddingValues) {
 
                 .height(200.dp)
                 .background(Color.White)
-                //.shadow(5.dp, ambientColor = Color.Black)
-                // .clip(shape = RoundedCornerShape(20.dp))
+//                .shadow(5.dp, ambientColor = Color.Black)
+                .clip(shape = RoundedCornerShape(20.dp))
                 .padding(8.dp),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 contentColor = Color.Black,
-                containerColor = Color.White
+                containerColor = Color(0xFFF3E5F5)
 
             ),
-            border = BorderStroke(1.dp, Color.Black)
+            elevation =CardDefaults.cardElevation( 10.dp)
+            //border = BorderStroke(1.dp, Color.Black)
 
         ) {
 
@@ -216,9 +227,9 @@ fun Account(padding: PaddingValues) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(16.dp, 10.dp)
 
-                    .background(Color.White)
+                    .background(Color.Transparent)
                     .clip(shape = RoundedCornerShape(10.dp)),
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
@@ -265,15 +276,15 @@ fun Account(padding: PaddingValues) {
                     .fillMaxWidth()
                     .padding(16.dp, 0.dp)
 
-                    .background(Color.White)
+                    .background(Color.Transparent)
                     .clip(shape = RoundedCornerShape(10.dp)),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
                     text = "email: ${userName.value}@gmail.com", style = TextStyle(
-                        // fontFamily = FontFamily.SansSerif,
-                        //fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.ExtraBold,
                         fontSize = 18.sp, color = Color.Gray
                     )
                 )
@@ -294,6 +305,14 @@ fun Account(padding: PaddingValues) {
 
         val update_password = remember { mutableStateOf("") }
         val confirm_password = remember { mutableStateOf("") }
+
+
+        Column(
+            modifier = Modifier.verticalScroll(rememberScrollState())
+        ) {
+
+
+
 
         Card(
             modifier = Modifier
@@ -511,6 +530,7 @@ fun Account(padding: PaddingValues) {
             Row(
                 modifier = Modifier
                     .padding(16.dp)
+                    // .clickable(onClick = { expanded = true })
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -521,7 +541,9 @@ fun Account(padding: PaddingValues) {
                         fontFamily = FontFamily.SansSerif,
                         // fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
-                    )
+                    ),
+                    modifier = Modifier
+                        .clickable(onClick = { expanded = true })
                 )
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
@@ -739,6 +761,7 @@ fun Account(padding: PaddingValues) {
 
 
         }
+    }
 
 
     }

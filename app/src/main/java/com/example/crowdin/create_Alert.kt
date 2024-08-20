@@ -1,5 +1,6 @@
 package com.example.crowdin
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -167,6 +168,7 @@ fun CreateAlertPage(nav: NavController) {
     }
 }
 
+@SuppressLint("UnrememberedMutableState")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateAlert(padding: PaddingValues) {
