@@ -611,7 +611,7 @@ fun CreateAlert(padding: PaddingValues) {
                             radius = radius.toInt(),
                             lat = selectedLocation.value.latitude,
                             lon = selectedLocation.value.longitude,
-                            user = "Ramanan",
+                            user = userName.value,
 
 //                        media = "selectImage"
                         )
